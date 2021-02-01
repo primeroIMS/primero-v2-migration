@@ -1,14 +1,11 @@
 # frozen_string_literal: true
 
+# Exports the current state of the Primero configuration as v2 compatible Ruby scripts.
 # This was copied from the primero_v2 project: app/models/exporters/ruby_config_exporter.rb.
-# It was modified to be stand-alone script that can be run on a v1.7 or v1.6 system
-# It should export config scripts compatible with v2
-# TODO: Do not include users or roles for now
+# It was modified to be stand-alone script that can be run on a v1.7 or v1.6 system.
+# TODO: The exporter does not account for Location, ExportConfiguration, User, Role
 
 require 'fileutils'
-
-# Exports the current state of the Primero configuration as Ruby scripts.
-# TODO: The exporter does not account for Location, ExportConfiguration, User, Role
 
 def initialize(export_dir: 'seed-files', file: nil)
   @export_dir = export_dir
@@ -71,6 +68,24 @@ def config_to_ruby_string(config_name, config_hash)
   ruby_string + "\n#{i})\n\n"
 end
 
+def array_value_to_ruby_string(value)
+  return '[]' if value.blank?
+
+  ruby_string = ''
+  if value.first.is_a?(Range)
+    ruby_string = "#{ value.map { |v| value_to_ruby_string(v) } }"
+  else
+    ruby_string = '['
+    _i
+    ruby_string += "\n#{i}"
+    ruby_string += value.map { |v| value_to_ruby_string(v) }.join(",\n#{i}")
+    i_
+    ruby_string += "\n#{i}"
+    ruby_string += ']'
+  end
+  ruby_string
+end
+
 # This is a long, recursive method.
 # rubocop:disable Metrics/MethodLength
 # rubocop:disable Metrics/AbcSize
@@ -85,15 +100,9 @@ def value_to_ruby_string(value)
     i_
     ruby_string + "\n#{i}}"
   elsif value.is_a?(Array)
-    ruby_string = '['
-    if value.present?
-      _i
-      ruby_string += "\n#{i}"
-      ruby_string += value.map { |v| value_to_ruby_string(v) }.join(",\n#{i}")
-      i_
-      ruby_string += "\n#{i}"
-    end
-    ruby_string + ']'
+    array_value_to_ruby_string(value)
+  elsif value.is_a?(Range)
+    value
   else
     value.to_json
   end
@@ -186,8 +195,8 @@ def configuration_hash_primero_program(object)
 end
 
 def configuration_hash_system_settings(object)
-  # TODO verify rest
-  object.attributes.except('id', 'default_locale', 'locales').with_indifferent_access
+  object.attributes.except('id', 'default_locale', 'locales', 'primero_version', 'show_provider_note_field',
+                           'set_service_implemented_on').with_indifferent_access
 end
 
 def configuration_hash_contact_information(object)
