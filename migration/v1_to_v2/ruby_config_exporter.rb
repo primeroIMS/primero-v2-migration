@@ -1,15 +1,14 @@
 # frozen_string_literal: true
 
-# TODO: This was copied from the primero_v2 project.
-# TODO: Need to modify this to be stand-alone script that can be run on a v1.7 or v1.6 system
-# TODO: It should export config scripts compatible with v2
+# This was copied from the primero_v2 project: app/models/exporters/ruby_config_exporter.rb.
+# It was modified to be stand-alone script that can be run on a v1.7 or v1.6 system
+# It should export config scripts compatible with v2
 # TODO: Do not include users or roles for now
 
 require 'fileutils'
 
 # Exports the current state of the Primero configuration as Ruby scripts.
-# TODO: The exporter does not account for Location, PrimeroModule, PrimeroProgram, SystemSettings
-# TODO: Use PrimeroConfiguration. This will allow us to export past configuration states as Ruby.
+# TODO: The exporter does not account for Location, ExportConfiguration, User, Role
 
 def initialize(export_dir: 'seed-files', file: nil)
   @export_dir = export_dir
@@ -112,6 +111,11 @@ def unique_id(object)
   }
 end
 
+def generate_report_id(name)
+  code = UUIDTools::UUID.random_create.to_s.last(7)
+  "report-#{name.parameterize}-#{code}"
+end
+
 def configuration_hash_agency(object)
   # TODO: handle logo
   object.attributes.except('id', 'base_language').merge(unique_id(object)).with_indifferent_access
@@ -122,8 +126,10 @@ def configuration_hash_lookup(object)
 end
 
 def configuration_hash_report(object)
-  # TODO: what to do with unique_id...
-  object.attributes.except('id', 'exclude_empty_rows', 'base_language', 'primero_version').with_indifferent_access
+  config_hash = object.attributes.except('id', 'module_ids', 'exclude_empty_rows', 'base_language', 'primero_version').with_indifferent_access
+  config_hash['module_id'] = object.module_ids.first
+  config_hash['unique_id'] = generate_report_id(object.name_en)
+  config_hash
 end
 
 def configuration_hash_user_group(object)
@@ -141,7 +147,6 @@ def configuration_hash_primero_program(object)
 end
 
 def configuration_hash_system_settings(object)
-  # TODO remove default_locale & locales
   # TODO verify rest
   object.attributes.except('id', 'default_locale', 'locales').with_indifferent_access
 end
@@ -153,7 +158,6 @@ def configuration_hash_contact_information(object)
 end
 
 def configuration_hash_form_section(object)
-  # TODO: handle fields
   config_hash = object.attributes.except('id', 'fields')
   config_hash['fields_attributes'] = object.fields.map { |field| configuration_hash_field(field) }
   config_hash
@@ -180,7 +184,6 @@ end
 initialize
 
 # TODO: Location, ExportConfiguration
-# TODO: what about FormSection/field?  Handle that separately?
 %w[Agency Lookup Report UserGroup PrimeroModule PrimeroProgram SystemSettings ContactInformation].each do |config_name|
   export_config_objects(config_name, config_objects(config_name))
 end
