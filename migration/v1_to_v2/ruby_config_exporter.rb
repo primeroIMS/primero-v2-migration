@@ -113,7 +113,36 @@ end
 
 def generate_report_id(name)
   code = UUIDTools::UUID.random_create.to_s.last(7)
-  "report-#{name.parameterize}-#{code}"
+  "#{name.parameterize}-#{code}"
+end
+
+def convert_field_map(field_map)
+  field_map['fields'].each do |field_hash|
+    field_hash['source'] = field_hash['source']&.last
+  end
+  field_map
+end
+
+def form_section_ruby_string(form_ids)
+  "FormSection.where(unique_id: %w#{form_ids})".gsub(/\"/, '').gsub(/,/, '')
+end
+
+def primero_program_ruby_string(program_id)
+  "PrimeroProgram.find_by(unique_id: '#{program_id}')"
+end
+
+def primero_module_options(object)
+  {
+    agency_code_indicator: object.agency_code_indicator,
+    workflow_status_indicator: object.workflow_status_indicator,
+    allow_searchable_ids: object.allow_searchable_ids,
+    selectable_approval_types: object.selectable_approval_types,
+    use_workflow_service_implemented: object.use_workflow_service_implemented,
+    use_workflow_case_plan: object.use_workflow_case_plan,
+    use_workflow_assessment: object.use_workflow_assessment,
+    reporting_location_filter: object.reporting_location_filter,
+    user_group_filter: object.user_group_filter
+  }
 end
 
 def configuration_hash_agency(object)
@@ -137,9 +166,19 @@ def configuration_hash_user_group(object)
 end
 
 def configuration_hash_primero_module(object)
-  # TODO: fix FormSections / associated_form_ids
-  # TODO: fix field maps
-  object.attributes.except('id').merge(unique_id(object)).with_indifferent_access
+  config_hash = object.attributes.except('id', 'associated_form_ids', 'field_map', 'program_id',
+                                         'agency_code_indicator', 'workflow_status_indicator', 'allow_searchable_ids',
+                                         'selectable_approval_types', 'use_workflow_service_implemented',
+                                         'use_workflow_case_plan', 'use_workflow_assessment',
+                                         'reporting_location_filter', 'user_group_filter').merge(unique_id(object)).with_indifferent_access
+  config_hash['field_map'] = convert_field_map(object.field_map)
+  config_hash['module_options'] = primero_module_options(object)
+
+  # TODO: This a hack for now.  This will require some manual manipulation of the output script to remove quotes.  Is there a better way?
+  config_hash['form_sections'] = form_section_ruby_string(object.associated_form_ids)
+  config_hash['primero_program'] = primero_program_ruby_string(object.program_id)
+
+  config_hash
 end
 
 def configuration_hash_primero_program(object)
