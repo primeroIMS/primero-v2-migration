@@ -154,7 +154,13 @@ end
 
 def configuration_hash_form_section(object)
   # TODO: handle fields
-  object.attributes.except('id', 'fields')
+  config_hash = object.attributes.except('id', 'fields')
+  config_hash['fields_attributes'] = object.fields.map { |field| configuration_hash_field(field) }
+  config_hash
+end
+
+def configuration_hash_field(field)
+  field.attributes.except('id', 'highlight_information', 'base_language').with_indifferent_access
 end
 
 def export_forms
