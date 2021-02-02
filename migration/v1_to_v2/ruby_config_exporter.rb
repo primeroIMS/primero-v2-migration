@@ -42,9 +42,10 @@ def file_for(config_name, config_objects = nil)
 end
 
 def forms_with_subforms
-  grouped_forms = FormSection.all.group_by do |form|
-    # form.is_nested ? form.subform_field&.form_section&.unique_id : form.unique_id
-    form.unique_id
+  fs = FormSection.all.select { |f| !f.is_nested }.group_by(&:unique_id)
+  grouped_forms = {}
+  fs.each do |k, v|
+    grouped_forms[k] = v + FormSection.get_subforms(v)
   end
   grouped_forms.map do |unique_id, form_and_subforms|
     [unique_id, form_and_subforms.sort_by { |form| form.is_nested? ? 0 : 1 }]
@@ -61,7 +62,7 @@ def export_config_objects(config_name, objects)
 end
 
 def config_to_ruby_string(config_name, config_hash)
-  ruby_string = "#{i}#{config_name}.create_or_update!(\n"
+  ruby_string = config_hash['unique_id'].present? ? "#{i}#{config_name}.create_or_update!(\n" : "#{i}#{config_name}.create!(\n"
   _i
   ruby_string += "#{i}#{value_to_ruby_string(config_hash)}"
   i_
@@ -132,6 +133,10 @@ def convert_field_map(field_map)
   field_map
 end
 
+def convert_reporting_location_config(reporting_location_config)
+  # TODO
+end
+
 def form_section_ruby_string(form_ids)
   "FormSection.where(unique_id: %w#{form_ids})".gsub(/\"/, '').gsub(/,/, '')
 end
@@ -156,11 +161,11 @@ end
 
 def configuration_hash_agency(object)
   # TODO: handle logo
-  object.attributes.except('id', 'base_language').merge(unique_id(object)).with_indifferent_access
+  object.attributes.except('id', 'base_language', 'core_resource').merge(unique_id(object)).with_indifferent_access
 end
 
 def configuration_hash_lookup(object)
-  object.attributes.except('id').merge(unique_id(object)).with_indifferent_access
+  object.attributes.except('id', 'base_language', 'editable').merge(unique_id(object)).with_indifferent_access
 end
 
 def configuration_hash_report(object)
@@ -195,8 +200,10 @@ def configuration_hash_primero_program(object)
 end
 
 def configuration_hash_system_settings(object)
-  object.attributes.except('id', 'default_locale', 'locales', 'primero_version', 'show_provider_note_field',
-                           'set_service_implemented_on').with_indifferent_access
+  config_hash = object.attributes.except('id', 'default_locale', 'locales', 'primero_version', 'show_provider_note_field',
+                                         'set_service_implemented_on', 'reporting_location_config').with_indifferent_access
+  config_hash['reporting_location_config'] = convert_reporting_location_config(object.reporting_location_config)
+  config_hash
 end
 
 def configuration_hash_contact_information(object)
@@ -206,13 +213,17 @@ def configuration_hash_contact_information(object)
 end
 
 def configuration_hash_form_section(object)
-  config_hash = object.attributes.except('id', 'fields')
+  config_hash = object.attributes.except('id', 'fields', 'base_language', 'collapsed_fields')
   config_hash['fields_attributes'] = object.fields.map { |field| configuration_hash_field(field) }
+  # TODO: fix collapsed_fields
   config_hash
 end
 
 def configuration_hash_field(field)
-  field.attributes.except('id', 'highlight_information', 'base_language').with_indifferent_access
+  config_hash = field.attributes.except('id', 'highlight_information', 'base_language', 'deletable', 'searchable_select',
+                                        'create_property', 'subform_section_id').with_indifferent_access
+  config_hash['subform_unique_id'] = field.subform_section_id
+  config_hash
 end
 
 def export_forms

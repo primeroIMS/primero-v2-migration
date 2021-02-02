@@ -15,6 +15,10 @@ puts 'Deleting ALL FIELDS!!!!'
 Field.destroy_all
 puts 'Deleting ALL LOOKUPS!!!!'
 Lookup.destroy_all
+puts 'Deleting ALL SystemSettings!!!!'
+SystemSettings.destroy_all
+puts 'Deleting ALL ContactInformation!!!!'
+ContactInformation.destroy_all
 
 # Reseed the lookups
 puts 'Seeding Lookups'
@@ -28,8 +32,9 @@ puts 'WARNING! Seeding Locations is turned off!'
 
 # TODO: investigate this
 # Export Configuration must be loaded before the System Settings are loaded
-puts 'Seeding Export Configuration'
-require File.dirname(__FILE__) + '/exports/exports.rb'
+puts 'WARNING! Seeding Export Configuration is turned off!'
+# puts 'Seeding Export Configuration'
+# require File.dirname(__FILE__) + '/exports/exports.rb'
 
 # Seed the system settings table
 puts 'Seeding the system settings'
@@ -53,7 +58,7 @@ puts 'Seeding Programs'
 require File.dirname(__FILE__) + '/primero_programs/primero_program.rb'
 
 puts 'Seeding Modules'
-require File.dirname(__FILE__) + '/primero_modules/primero_modules.rb'
+require File.dirname(__FILE__) + '/primero_modules/primero_module.rb'
 
 # TODO
 puts 'WARNING! Seeding Roles is turned off!'
@@ -61,7 +66,7 @@ puts 'WARNING! Seeding Roles is turned off!'
 # require File.dirname(__FILE__) + '/users/roles.rb'
 
 puts 'Seeding Agencies'
-require File.dirname(__FILE__) + '/agencies/agencies.rb'
+require File.dirname(__FILE__) + '/agencies/agency.rb'
 
 puts 'Seeding User Groups'
 require File.dirname(__FILE__) + '/user_groups/user_group.rb'
