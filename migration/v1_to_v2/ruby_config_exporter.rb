@@ -112,7 +112,7 @@ end
 # rubocop:enable Metrics/AbcSize
 
 def key_to_ruby(key)
-  key.include?('-') ? "'#{key}'" : key
+  key.is_a?(Integer) || key.include?('-') ? "'#{key}'" : key
 end
 
 def unique_id(object)
@@ -134,7 +134,9 @@ def convert_field_map(field_map)
 end
 
 def convert_reporting_location_config(reporting_location_config)
-  # TODO
+  reporting_location_hash = reporting_location_config.attributes.except('admin_level_map', 'reg_ex_filter')
+  reporting_location_hash['admin_level_map'] = reporting_location_config.admin_level_map.map { |k, v| [v, [k]] }.to_h
+  reporting_location_hash
 end
 
 def form_section_ruby_string(form_ids)
