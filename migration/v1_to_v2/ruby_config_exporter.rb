@@ -214,6 +214,12 @@ def configuration_hash_contact_information(object)
   config_hash
 end
 
+def configuration_hash_export_configuration(object)
+  config_hash = object.attributes.except('id').with_indifferent_access
+  config_hash['unique_id'] = "export-#{object&.export_id&.dasherize}"
+  config_hash
+end
+
 def configuration_hash_form_section(object)
   config_hash = object.attributes.except('id', 'fields', 'base_language', 'collapsed_fields')
   config_hash['fields_attributes'] = object.fields.map { |field| configuration_hash_field(field) }
@@ -245,7 +251,7 @@ end
 initialize
 
 # TODO: Location, ExportConfiguration
-%w[Agency Lookup Report UserGroup PrimeroModule PrimeroProgram SystemSettings ContactInformation].each do |config_name|
+%w[Agency Lookup Report UserGroup PrimeroModule PrimeroProgram SystemSettings ContactInformation ExportConfiguration].each do |config_name|
   export_config_objects(config_name, config_objects(config_name))
 end
 export_forms

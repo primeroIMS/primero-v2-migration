@@ -30,14 +30,12 @@ puts 'WARNING! Seeding Locations is turned off!'
 #puts 'Seeding Locations'
 #require File.dirname(__FILE__) + '/locations/locations.rb'
 
-# TODO: investigate this
 # Export Configuration must be loaded before the System Settings are loaded
-puts 'WARNING! Seeding Export Configuration is turned off!'
-# puts 'Seeding Export Configuration'
-# require File.dirname(__FILE__) + '/exports/exports.rb'
+puts 'Seeding Export Configuration'
+require File.dirname(__FILE__) + '/export_configurations/export_configuration.rb'
 
 # Seed the system settings table
-puts 'Seeding the system settings'
+puts 'Seeding System Settings'
 require File.dirname(__FILE__) + '/system_settings/system_settings.rb'
 
 # TODO
@@ -50,7 +48,7 @@ puts 'WARNING! Seeding Identity Providers is turned off!'
 # end
 
 # Create the forms
-puts '[Re-]Seeding the forms'
+puts '[Re-]Seeding the Forms'
 Dir[File.dirname(__FILE__) + '/forms/*/*.rb'].sort.each(&method(:require))
 
 # Reseed the default roles and users, and modules
@@ -72,11 +70,11 @@ puts 'Seeding User Groups'
 require File.dirname(__FILE__) + '/user_groups/user_group.rb'
 
 # TODO
-puts 'Seeding Users'
+# puts 'Seeding Users'
 puts 'WARNING! Seeding Users is turned off!'
 # require File.dirname(__FILE__) + '/users/default_users.rb'
 
-puts 'Seeding Default Reports'
+puts 'Seeding Reports'
 Dir[File.dirname(__FILE__) + '/reports/*.rb'].sort.each(&method(:require))
 
 puts 'Seeding Contact Information'
