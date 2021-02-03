@@ -222,15 +222,14 @@ end
 
 def configuration_hash_form_section(object)
   config_hash = object.attributes.except('id', 'fields', 'base_language', 'collapsed_fields')
-  config_hash['fields_attributes'] = object.fields.map { |field| configuration_hash_field(field) }
-  # TODO: fix collapsed_fields
+  config_hash['fields_attributes'] = object.fields.map { |field| configuration_hash_field(field, object.collapsed_fields, object.unique_id) }
   config_hash
 end
 
-def configuration_hash_field(field)
+def configuration_hash_field(field, collapsed_fields, form_unique_id)
   config_hash = field.attributes.except('id', 'highlight_information', 'base_language', 'deletable', 'searchable_select',
                                         'create_property', 'subform_section_id').with_indifferent_access
-  config_hash['subform_unique_id'] = field.subform_section_id
+  config_hash['collapsed_field_for_subform_unique_id'] = form_unique_id if collapsed_fields.include?(field.name)
   config_hash
 end
 
