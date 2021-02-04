@@ -121,6 +121,16 @@ def unique_id(object)
   }
 end
 
+def approvals_labels
+  {
+    assessment: 'SER',
+    case_plan: 'Case Plan',
+    closure: 'Closure',
+    action_plan: 'Action Plan',
+    gbv_closure: 'GBV Closure'
+  }
+end
+
 def generate_report_id(name)
   code = UUIDTools::UUID.random_create.to_s.last(7)
   "#{name.parameterize}-#{code}"
@@ -205,6 +215,7 @@ def configuration_hash_system_settings(object)
   config_hash = object.attributes.except('id', 'default_locale', 'locales', 'primero_version', 'show_provider_note_field',
                                          'set_service_implemented_on', 'reporting_location_config').with_indifferent_access
   config_hash['reporting_location_config'] = convert_reporting_location_config(object.reporting_location_config)
+  config_hash['approvals_labels_en'] = approvals_labels
   config_hash
 end
 
@@ -230,6 +241,7 @@ def configuration_hash_field(field, collapsed_fields, form_unique_id)
   config_hash = field.attributes.except('id', 'highlight_information', 'base_language', 'deletable', 'searchable_select',
                                         'create_property', 'subform_section_id').with_indifferent_access
   config_hash['collapsed_field_for_subform_unique_id'] = form_unique_id if collapsed_fields.include?(field.name)
+  config_hash['subform_unique_id'] = field.subform_section_id if field.type == 'subform'
   config_hash
 end
 
@@ -249,7 +261,7 @@ end
 ###################################
 initialize
 
-# TODO: Location, ExportConfiguration
+# TODO: Location, Role, User(?)
 %w[Agency Lookup Report UserGroup PrimeroModule PrimeroProgram SystemSettings ContactInformation ExportConfiguration].each do |config_name|
   export_config_objects(config_name, config_objects(config_name))
 end
