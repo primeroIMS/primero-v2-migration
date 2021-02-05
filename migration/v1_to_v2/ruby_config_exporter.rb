@@ -104,6 +104,8 @@ def value_to_ruby_string(value)
     array_value_to_ruby_string(value)
   elsif value.is_a?(Range)
     value
+  elsif value.is_a?(String) && (value.include?('.where(') || value.include?('.find_by('))
+    value
   else
     value.to_json
   end
@@ -199,8 +201,6 @@ def configuration_hash_primero_module(object)
                                          'reporting_location_filter', 'user_group_filter').merge(unique_id(object)).with_indifferent_access
   config_hash['field_map'] = convert_field_map(object.field_map)
   config_hash['module_options'] = primero_module_options(object)
-
-  # TODO: This a hack for now.  This will require some manual manipulation of the output script to remove quotes.  Is there a better way?
   config_hash['form_sections'] = form_section_ruby_string(object.associated_form_ids)
   config_hash['primero_program'] = primero_program_ruby_string(object.program_id)
 
