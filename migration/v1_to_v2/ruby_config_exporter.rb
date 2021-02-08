@@ -95,7 +95,7 @@ def value_to_ruby_string(value)
     ruby_string = "{\n"
     _i
     ruby_string += i
-    ruby_string += value.compact.map do |k, v|
+    ruby_string += value.reject { |_, v| v.nil? }.map do |k, v|
       "#{key_to_ruby(k)}: #{value_to_ruby_string(v)}"
     end.join(",\n#{i}")
     i_
@@ -208,7 +208,10 @@ def configuration_hash_primero_module(object)
 end
 
 def configuration_hash_primero_program(object)
-  object.attributes.except('id').merge(unique_id(object)).with_indifferent_access
+  config_hash = object.attributes.except('id', 'name', 'description').merge(unique_id(object)).with_indifferent_access
+  config_hash['name_en'] = object.name
+  config_hash['description_en'] = object.description
+  config_hash
 end
 
 def configuration_hash_system_settings(object)
@@ -247,6 +250,9 @@ end
 
 def export_forms
   forms_with_subforms.each do |_, form_with_subforms|
+    # record_owner forms are hard coded in v2
+    next if form_with_subforms.any? { |form| form.form_group_id&.include?('record_owner') }
+
     forms_hash = form_with_subforms.map { |form| configuration_hash_form_section(form) }
     export_config_objects('FormSection', forms_hash)
   end
