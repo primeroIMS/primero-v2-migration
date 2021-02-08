@@ -235,7 +235,8 @@ def configuration_hash_export_configuration(object)
 end
 
 def configuration_hash_form_section(object)
-  config_hash = object.attributes.except('id', 'fields', 'base_language', 'collapsed_fields')
+  config_hash = object.attributes.except('id', 'fields', 'base_language', 'collapsed_fields', 'fixed_order',
+                                         'perm_visible', 'perm_enabled', 'validations')
   config_hash['fields_attributes'] = object.fields.map { |field| configuration_hash_field(field, object.collapsed_fields, object.unique_id) }
   config_hash
 end
