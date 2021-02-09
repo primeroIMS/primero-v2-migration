@@ -101,7 +101,8 @@ def value_to_ruby_string(value)
     ruby_string = "{\n"
     _i
     ruby_string += i
-    ruby_string += value.reject { |_, v| v.nil? }.map do |k, v|
+    # TODO: was using .compact instead of .reject but it was throwing away false values.  We want to keep those
+    ruby_string += value.reject { |_, v| v.nil? || v == [] }.map do |k, v|
       "#{key_to_ruby(k)}: #{value_to_ruby_string(v)}"
     end.join(",\n#{i}")
     i_
@@ -179,6 +180,29 @@ def primero_module_options(object)
   }
 end
 
+def modules_for_superuser
+  PrimeroModule.all.map(&:id)
+end
+
+def role_module(object)
+  return modules_for_superuser if object.id == 'role-superuser'
+
+  return [PrimeroModule::GBV] if object.id.include?('gbv')
+
+  return [PrimeroModule::MRM] if object.id.include?('mrm')
+
+  [PrimeroModule::CP]
+end
+
+def module_forms(modules)
+  modules.map { |module_id| PrimeroModule.get(module_id)&.associated_form_ids }.flatten.uniq || []
+end
+
+def role_forms(permitted_form_ids, modules)
+  form_ids = permitted_form_ids.present? ? permitted_form_ids : module_forms(modules)
+  form_ids - retired_forms
+end
+
 def configuration_hash_agency(object)
   # TODO: handle logo
   object.attributes.except('id', 'base_language', 'core_resource').merge(unique_id(object)).with_indifferent_access
@@ -243,6 +267,15 @@ def configuration_hash_export_configuration(object)
   config_hash
 end
 
+def configuration_hash_role(object)
+  config_hash = object.attributes.except('id', 'permissions_list', 'permitted_form_ids').merge(unique_id(object)).with_indifferent_access
+  # TODO
+  config_hash['module_unique_ids'] = role_module(object)
+  # config_hash['permissions'] = Permission::PermissionSerializer.dump(permissions)
+  config_hash['form_section_unique_ids'] = role_forms(object.permitted_form_ids, config_hash['module_unique_ids'])
+  config_hash
+end
+
 def configuration_hash_form_section(object)
   config_hash = object.attributes.except('id', 'fields', 'base_language', 'collapsed_fields', 'fixed_order',
                                          'perm_visible', 'perm_enabled', 'validations')
@@ -269,13 +302,17 @@ def config_objects(config_name)
   Object.const_get(config_name).all.map { |object| send("configuration_hash_#{config_name.underscore}", object) }
 end
 
+# TODO: Location, Role, User(?)
+def config_object_names
+  %w[Agency Lookup Report UserGroup PrimeroModule PrimeroProgram SystemSettings ContactInformation ExportConfiguration
+     Role]
+end
+
 ###################################
 # Beginning of script
 ###################################
 initialize
-
-# TODO: Location, Role, User(?)
-%w[Agency Lookup Report UserGroup PrimeroModule PrimeroProgram SystemSettings ContactInformation ExportConfiguration].each do |config_name|
+config_object_names.each do |config_name|
   export_config_objects(config_name, config_objects(config_name))
 end
 export_forms
