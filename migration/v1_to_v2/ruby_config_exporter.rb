@@ -41,11 +41,17 @@ def file_for(config_name, config_objects = nil)
   end
 end
 
+# These forms are now hard coded in v2 and the form configs are no longer needed
+def retired_forms
+  %w[approvals approval_subforms referral_transfer record_owner incident_record_owner cp_incident_record_owner
+     transitions]
+end
+
 def forms_with_subforms
-  fs = FormSection.all.select { |f| !f.is_nested }.group_by(&:unique_id)
+  fs = FormSection.all.reject(&:is_nested).group_by(&:unique_id)
   grouped_forms = {}
   fs.each do |k, v|
-    grouped_forms[k] = v + FormSection.get_subforms(v)
+    grouped_forms[k] = v + FormSection.get_subforms(v) unless retired_forms.include?(v.first.unique_id)
   end
   grouped_forms.map do |unique_id, form_and_subforms|
     [unique_id, form_and_subforms.sort_by { |form| form.is_nested? ? 0 : 1 }]
@@ -74,7 +80,7 @@ def array_value_to_ruby_string(value)
 
   ruby_string = ''
   if value.first.is_a?(Range)
-    ruby_string = "#{ value.map { |v| value_to_ruby_string(v) } }"
+    ruby_string = value.map { |v| value_to_ruby_string(v) }.to_s
   else
     ruby_string = '['
     _i
@@ -183,7 +189,8 @@ def configuration_hash_lookup(object)
 end
 
 def configuration_hash_report(object)
-  config_hash = object.attributes.except('id', 'module_ids', 'exclude_empty_rows', 'base_language', 'primero_version').with_indifferent_access
+  config_hash = object.attributes.except('id', 'module_ids', 'exclude_empty_rows', 'base_language',
+                                         'primero_version').with_indifferent_access
   config_hash['module_id'] = object.module_ids.first
   config_hash['unique_id'] = generate_report_id(object.name_en)
   config_hash
@@ -198,10 +205,11 @@ def configuration_hash_primero_module(object)
                                          'agency_code_indicator', 'workflow_status_indicator', 'allow_searchable_ids',
                                          'selectable_approval_types', 'use_workflow_service_implemented',
                                          'use_workflow_case_plan', 'use_workflow_assessment',
-                                         'reporting_location_filter', 'user_group_filter').merge(unique_id(object)).with_indifferent_access
+                                         'reporting_location_filter',
+                                         'user_group_filter').merge(unique_id(object)).with_indifferent_access
   config_hash['field_map'] = convert_field_map(object.field_map)
   config_hash['module_options'] = primero_module_options(object)
-  config_hash['form_sections'] = form_section_ruby_string(object.associated_form_ids)
+  config_hash['form_sections'] = form_section_ruby_string(object.associated_form_ids - retired_forms)
   config_hash['primero_program'] = primero_program_ruby_string(object.program_id)
 
   config_hash
@@ -215,8 +223,9 @@ def configuration_hash_primero_program(object)
 end
 
 def configuration_hash_system_settings(object)
-  config_hash = object.attributes.except('id', 'default_locale', 'locales', 'primero_version', 'show_provider_note_field',
-                                         'set_service_implemented_on', 'reporting_location_config').with_indifferent_access
+  config_hash = object.attributes.except('id', 'default_locale', 'locales', 'primero_version',
+                                         'show_provider_note_field', 'set_service_implemented_on',
+                                         'reporting_location_config').with_indifferent_access
   config_hash['reporting_location_config'] = convert_reporting_location_config(object.reporting_location_config)
   config_hash['approvals_labels_en'] = approvals_labels
   config_hash
@@ -251,9 +260,6 @@ end
 
 def export_forms
   forms_with_subforms.each do |_, form_with_subforms|
-    # record_owner forms are hard coded in v2
-    next if form_with_subforms.any? { |form| form.form_group_id&.include?('record_owner') }
-
     forms_hash = form_with_subforms.map { |form| configuration_hash_form_section(form) }
     export_config_objects('FormSection', forms_hash)
   end
@@ -273,5 +279,3 @@ initialize
   export_config_objects(config_name, config_objects(config_name))
 end
 export_forms
-
-
