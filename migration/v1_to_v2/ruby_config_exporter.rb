@@ -203,6 +203,19 @@ def role_forms(permitted_form_ids, modules)
   form_ids - retired_forms
 end
 
+# TODO: tackle the long list of permission change requirements
+def role_permissions(permissions)
+  object_hash = {}
+  json_hash = permissions.inject({}) do |hash, permission|
+    hash[permission.resource] = permission.actions
+    object_hash[Permission::AGENCY] = permission.agency_ids if permission.agency_ids.present?
+    object_hash[Permission::ROLE] = permission.role_ids if permission.role_ids.present?
+    hash
+  end
+  json_hash['objects'] = object_hash
+  json_hash
+end
+
 def configuration_hash_agency(object)
   # TODO: handle logo
   object.attributes.except('id', 'base_language', 'core_resource').merge(unique_id(object)).with_indifferent_access
@@ -269,9 +282,8 @@ end
 
 def configuration_hash_role(object)
   config_hash = object.attributes.except('id', 'permissions_list', 'permitted_form_ids').merge(unique_id(object)).with_indifferent_access
-  # TODO
   config_hash['module_unique_ids'] = role_module(object)
-  # config_hash['permissions'] = Permission::PermissionSerializer.dump(permissions)
+  config_hash['permissions'] = role_permissions(object.permissions_list)
   config_hash['form_section_unique_ids'] = role_forms(object.permitted_form_ids, config_hash['module_unique_ids'])
   config_hash
 end
@@ -302,7 +314,7 @@ def config_objects(config_name)
   Object.const_get(config_name).all.map { |object| send("configuration_hash_#{config_name.underscore}", object) }
 end
 
-# TODO: Location, Role, User(?)
+# TODO: Location, User(?)
 def config_object_names
   %w[Agency Lookup Report UserGroup PrimeroModule PrimeroProgram SystemSettings ContactInformation ExportConfiguration
      Role]
