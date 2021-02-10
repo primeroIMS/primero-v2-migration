@@ -282,6 +282,7 @@ end
 
 def configuration_hash_role(object)
   config_hash = object.attributes.except('id', 'permissions_list', 'permitted_form_ids').merge(unique_id(object)).with_indifferent_access
+  config_hash['is_manager'] = ['all', 'group'].include?(object.group_permission)
   config_hash['module_unique_ids'] = role_module(object)
   config_hash['permissions'] = role_permissions(object.permissions_list)
   config_hash['form_section_unique_ids'] = role_forms(object.permitted_form_ids, config_hash['module_unique_ids'])
