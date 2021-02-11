@@ -203,11 +203,63 @@ def role_forms(permitted_form_ids, modules)
   form_ids - retired_forms
 end
 
+def permission_actions_case(actions, opts = {})
+  return [] if actions.blank?
+
+  new_actions = actions - %w[export_case_pdf export_child_pdf request_approval_bia approve_bia]
+  new_actions << 'export_pdf' if (actions & %w[export_case_pdf export_child_pdf]).any?
+  new_actions << 'request_approval_assessment' if actions.include?('request_approval_bia')
+  new_actions << 'approve_assessment' if actions.include?('approve_bia')
+  new_actions << 'reopen' if actions.include?('write')
+  new_actions << 'close' if actions.include?('write')
+  new_actions << 'enable_disable' if actions.include?('write')
+  new_actions << 'change_log' unless opts[:form_restrictions]
+  new_actions.uniq
+end
+
+def permission_actions_incident(actions, opts = {})
+  return [] if actions.blank?
+
+  new_actions = actions - %w[export_photowall export_unhcr_csv assign request_approval_bia request_approval_case_plan
+                             request_approval_closure]
+  new_actions << 'enable_disable' if actions.include?('write')
+  new_actions << 'change_log' unless opts[:form_restrictions]
+  new_actions.uniq
+end
+
+def permission_actions_tracing_request(actions, opts = {})
+  return [] if actions.blank?
+
+  new_actions = actions - %w[export_photowall export_unhcr_csv assign]
+  new_actions << 'enable_disable' if actions.include?('write')
+  new_actions << 'change_log' unless opts[:form_restrictions]
+  new_actions.uniq
+end
+
+def permission_actions_dashboard(actions, opts = {})
+  return [] if actions.blank?
+
+  new_actions = actions - %w[view_approvals view_assessment dash_cases_by_workflow dash_cases_by_task_overdue
+                             dash_manager_transfers dash_referrals_by_socal_worker dash_transfers_by_socal_worker]
+  new_actions << 'dash_case_risk' if actions.include?('view_assessment')
+  new_actions << 'dash_workflow_team' if actions.include?('dash_cases_by_workflow')
+  new_actions << 'dash_shared_with_my_team' if actions.include?('dash_referrals_by_socal_worker')
+  new_actions << 'dash_shared_from_my_team' if actions.include?('dash_transfers_by_socal_worker')
+  new_actions.uniq
+end
+
+def permission_actions(permission, opts = {})
+  resources_to_modify = %w[case incident tracing_request dashboard]
+  return permission.actions unless resources_to_modify.include?(permission.resource)
+
+  send("permission_actions_#{permission.resource}", permission.actions, opts)
+end
+
 # TODO: tackle the long list of permission change requirements
-def role_permissions(permissions)
+def role_permissions(permissions, opts = {})
   object_hash = {}
   json_hash = permissions.inject({}) do |hash, permission|
-    hash[permission.resource] = permission.actions
+    hash[permission.resource] = permission_actions(permission, opts)
     object_hash[Permission::AGENCY] = permission.agency_ids if permission.agency_ids.present?
     object_hash[Permission::ROLE] = permission.role_ids if permission.role_ids.present?
     hash
@@ -284,7 +336,7 @@ def configuration_hash_role(object)
   config_hash = object.attributes.except('id', 'permissions_list', 'permitted_form_ids').merge(unique_id(object)).with_indifferent_access
   config_hash['is_manager'] = ['all', 'group'].include?(object.group_permission)
   config_hash['module_unique_ids'] = role_module(object)
-  config_hash['permissions'] = role_permissions(object.permissions_list)
+  config_hash['permissions'] = role_permissions(object.permissions_list, form_restrictions: object.permitted_form_ids.present?)
   config_hash['form_section_unique_ids'] = role_forms(object.permitted_form_ids, config_hash['module_unique_ids'])
   config_hash
 end
