@@ -236,6 +236,17 @@ def permission_actions_tracing_request(actions, opts = {})
   new_actions.uniq
 end
 
+def permission_actions_dashboard_approval(opts)
+  actions = []
+  actions << 'dash_approvals_assessment' if opts[:case_permissions]&.include?('request_approval_bia')
+  actions << 'dash_approvals_assessment_pending' if opts[:case_permissions]&.include?('approve_bia')
+  actions << 'dash_approvals_case_plan' if opts[:case_permissions]&.include?('request_approval_case_plan')
+  actions << 'dash_approvals_case_plan_pending' if opts[:case_permissions]&.include?('approve_case_plan')
+  actions << 'dash_approvals_closure' if opts[:case_permissions]&.include?('request_approval_closure')
+  actions << 'dash_approvals_closure_pending' if opts[:case_permissions]&.include?('approve_closure')
+  actions
+end
+
 def permission_actions_dashboard(actions, opts = {})
   return [] if actions.blank?
 
@@ -245,6 +256,10 @@ def permission_actions_dashboard(actions, opts = {})
   new_actions << 'dash_workflow_team' if actions.include?('dash_cases_by_workflow')
   new_actions << 'dash_shared_with_my_team' if actions.include?('dash_referrals_by_socal_worker')
   new_actions << 'dash_shared_from_my_team' if actions.include?('dash_transfers_by_socal_worker')
+  new_actions << 'dash_case_overview' if opts[:group_permission] == 'self'
+  new_actions << 'dash_group_overview' if opts[:group_permission] == 'group'
+
+  new_actions += permission_actions_dashboard_approval(opts) if actions.include?('view_approvals')
   new_actions.uniq
 end
 
@@ -255,10 +270,15 @@ def permission_actions(permission, opts = {})
   send("permission_actions_#{permission.resource}", permission.actions, opts)
 end
 
+def case_permissions(permissions)
+  permissions.select{|p| p.resource == 'case'}.first&.actions
+end
+
 # TODO: tackle the long list of permission change requirements
 def role_permissions(permissions, opts = {})
   object_hash = {}
   json_hash = permissions.inject({}) do |hash, permission|
+    opts[:case_permissions] = case_permissions(permissions) if permission.resource == 'dashboard'
     hash[permission.resource] = permission_actions(permission, opts)
     object_hash[Permission::AGENCY] = permission.agency_ids if permission.agency_ids.present?
     object_hash[Permission::ROLE] = permission.role_ids if permission.role_ids.present?
@@ -336,7 +356,8 @@ def configuration_hash_role(object)
   config_hash = object.attributes.except('id', 'permissions_list', 'permitted_form_ids').merge(unique_id(object)).with_indifferent_access
   config_hash['is_manager'] = ['all', 'group'].include?(object.group_permission)
   config_hash['module_unique_ids'] = role_module(object)
-  config_hash['permissions'] = role_permissions(object.permissions_list, form_restrictions: object.permitted_form_ids.present?)
+  config_hash['permissions'] = role_permissions(object.permissions_list, form_restrictions: object.permitted_form_ids.present?,
+                                                group_permission: object.group_permission)
   config_hash['form_section_unique_ids'] = role_forms(object.permitted_form_ids, config_hash['module_unique_ids'])
   config_hash
 end
