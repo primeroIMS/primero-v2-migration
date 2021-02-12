@@ -247,6 +247,18 @@ def permission_actions_dashboard_approval(opts)
   actions
 end
 
+def receive_permissions?(actions)
+  return [] if actions.blank?
+
+  (actions & %w[receive_referral receive_transfer]).any?
+end
+
+def share_permissions?(actions)
+  return [] if actions.blank?
+
+  (actions & %w[referral transfer referral_from_service]).any?
+end
+
 def permission_actions_dashboard(actions, opts = {})
   return [] if actions.blank?
 
@@ -258,7 +270,8 @@ def permission_actions_dashboard(actions, opts = {})
   new_actions << 'dash_shared_from_my_team' if actions.include?('dash_transfers_by_socal_worker')
   new_actions << 'dash_case_overview' if opts[:group_permission] == 'self'
   new_actions << 'dash_group_overview' if opts[:group_permission] == 'group'
-
+  new_actions << 'dash_shared_with_me' if actions.include?('view_assessment ') || receive_permissions?(opts[:case_permissions])
+  new_actions << 'dash_shared_with_others' if share_permissions?(opts[:case_permissions])
   new_actions += permission_actions_dashboard_approval(opts) if actions.include?('view_approvals')
   new_actions.uniq
 end
