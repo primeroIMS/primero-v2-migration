@@ -263,14 +263,16 @@ def permission_actions_dashboard_approval(opts = {})
   actions
 end
 
+def permission_task_overdue_services?(field_names)
+  (!system_settings.due_date_from_appointment_date && field_names.include?('service_response_timeframe')) ||
+    (system_settings.due_date_from_appointment_date && field_names.include?('service_appointment_date'))
+end
+
 def permission_actions_dashboard_task_overdue(field_names)
   new_actions = []
   new_actions << 'dash_cases_by_task_overdue_assessment' if field_names.include?('assessment_requested_on')
   new_actions << 'dash_cases_by_task_overdue_case_plan' if field_names.include?('case_plan_due_date')
-
-  # TODO: need System Settings value for this one
-  # new_actions << 'dash_cases_by_task_overdue_services' if field_names.include?('')
-
+  new_actions << 'dash_cases_by_task_overdue_services' if permission_task_overdue_services?(field_names)
   new_actions << 'dash_cases_by_task_overdue_followups' if field_names.include?('followup_needed_by_date')
   new_actions
 end
@@ -428,16 +430,24 @@ def config_objects(config_name)
   Object.const_get(config_name).all.map { |object| send("configuration_hash_#{config_name.underscore}", object) }
 end
 
+def system_settings
+  @system_settings ||= SystemSettings.current
+  @system_settings
+end
+
 # TODO: Location, User(?)
 def config_object_names
-  %w[Agency Lookup Report UserGroup PrimeroModule PrimeroProgram SystemSettings ContactInformation ExportConfiguration
-     Role]
+  %w[Agency Lookup Report UserGroup PrimeroModule PrimeroProgram ContactInformation ExportConfiguration Role]
 end
 
 ###################################
 # Beginning of script
 ###################################
 initialize
+
+#SystemSettings goes first because Role depends on it
+export_config_objects('SystemSettings', [configuration_hash_system_settings(system_settings)])
+
 config_object_names.each do |config_name|
   export_config_objects(config_name, config_objects(config_name))
 end
