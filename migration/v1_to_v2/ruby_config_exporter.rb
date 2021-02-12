@@ -3,7 +3,7 @@
 # Exports the current state of the Primero configuration as v2 compatible Ruby scripts.
 # This was copied from the primero_v2 project: app/models/exporters/ruby_config_exporter.rb.
 # It was modified to be stand-alone script that can be run on a v1.7 or v1.6 system.
-# TODO: The exporter does not account for Location, ExportConfiguration, User, Role
+# TODO: The exporter does not account for Location, User
 
 require 'fileutils'
 
@@ -48,14 +48,17 @@ def retired_forms
 end
 
 def forms_with_subforms
+  return @forms_with_subforms if @forms_with_subforms.present?
+
   fs = FormSection.all.reject(&:is_nested).group_by(&:unique_id)
   grouped_forms = {}
   fs.each do |k, v|
     grouped_forms[k] = v + FormSection.get_subforms(v) unless retired_forms.include?(v.first.unique_id)
   end
-  grouped_forms.map do |unique_id, form_and_subforms|
-    [unique_id, form_and_subforms.sort_by { |form| form.is_nested? ? 0 : 1 }]
-  end.to_h
+  @forms_with_subforms = grouped_forms.map do |unique_id, form_and_subforms|
+                           [unique_id, form_and_subforms.sort_by { |form| form.is_nested? ? 0 : 1 }]
+                         end.to_h
+  @forms_with_subforms
 end
 
 def export_config_objects(config_name, objects)
@@ -72,7 +75,9 @@ def config_to_ruby_string(config_name, config_hash)
   _i
   ruby_string += "#{i}#{value_to_ruby_string(config_hash)}"
   i_
-  ruby_string + "\n#{i})\n\n"
+  ruby_string += "\n#{i})\n"
+  ruby_string += role_form_ruby_string(config_hash['unique_id']) + "\n" if config_name == 'Role' && config_hash['form_section_unique_ids'].blank?
+  ruby_string + "\n"
 end
 
 def array_value_to_ruby_string(value)
@@ -166,6 +171,10 @@ def primero_program_ruby_string(program_id)
   "PrimeroProgram.find_by(unique_id: '#{program_id}')"
 end
 
+def role_form_ruby_string(role_id)
+  "Role.find_by(unique_id: '#{role_id}')&.associate_all_forms"
+end
+
 def primero_module_options(object)
   {
     agency_code_indicator: object.agency_code_indicator,
@@ -194,13 +203,8 @@ def role_module(object)
   [PrimeroModule::CP]
 end
 
-def module_forms(modules)
-  modules.map { |module_id| PrimeroModule.get(module_id)&.associated_form_ids }.flatten.uniq || []
-end
-
-def role_forms(permitted_form_ids, modules)
-  form_ids = permitted_form_ids.present? ? permitted_form_ids : module_forms(modules)
-  form_ids - retired_forms
+def role_forms(permitted_form_ids)
+  permitted_form_ids - retired_forms if permitted_form_ids.present?
 end
 
 def permission_actions_case(actions, opts = {})
@@ -213,7 +217,7 @@ def permission_actions_case(actions, opts = {})
   new_actions << 'reopen' if actions.include?('write')
   new_actions << 'close' if actions.include?('write')
   new_actions << 'enable_disable' if actions.include?('write')
-  new_actions << 'change_log' unless opts[:form_restrictions]
+  new_actions << 'change_log' if opts[:permitted_form_ids].blank?
   new_actions.uniq
 end
 
@@ -223,7 +227,7 @@ def permission_actions_incident(actions, opts = {})
   new_actions = actions - %w[export_photowall export_unhcr_csv assign request_approval_bia request_approval_case_plan
                              request_approval_closure]
   new_actions << 'enable_disable' if actions.include?('write')
-  new_actions << 'change_log' unless opts[:form_restrictions]
+  new_actions << 'change_log' if opts[:permitted_form_ids].blank?
   new_actions.uniq
 end
 
@@ -232,19 +236,8 @@ def permission_actions_tracing_request(actions, opts = {})
 
   new_actions = actions - %w[export_photowall export_unhcr_csv assign]
   new_actions << 'enable_disable' if actions.include?('write')
-  new_actions << 'change_log' unless opts[:form_restrictions]
+  new_actions << 'change_log' if opts[:permitted_form_ids].blank?
   new_actions.uniq
-end
-
-def permission_actions_dashboard_approval(opts)
-  actions = []
-  actions << 'dash_approvals_assessment' if opts[:case_permissions]&.include?('request_approval_bia')
-  actions << 'dash_approvals_assessment_pending' if opts[:case_permissions]&.include?('approve_bia')
-  actions << 'dash_approvals_case_plan' if opts[:case_permissions]&.include?('request_approval_case_plan')
-  actions << 'dash_approvals_case_plan_pending' if opts[:case_permissions]&.include?('approve_case_plan')
-  actions << 'dash_approvals_closure' if opts[:case_permissions]&.include?('request_approval_closure')
-  actions << 'dash_approvals_closure_pending' if opts[:case_permissions]&.include?('approve_closure')
-  actions
 end
 
 def receive_permissions?(actions)
@@ -257,6 +250,39 @@ def share_permissions?(actions)
   return [] if actions.blank?
 
   (actions & %w[referral transfer referral_from_service]).any?
+end
+
+def permission_actions_dashboard_approval(opts = {})
+  actions = []
+  actions << 'dash_approvals_assessment' if opts[:case_permissions]&.include?('request_approval_bia')
+  actions << 'dash_approvals_assessment_pending' if opts[:case_permissions]&.include?('approve_bia')
+  actions << 'dash_approvals_case_plan' if opts[:case_permissions]&.include?('request_approval_case_plan')
+  actions << 'dash_approvals_case_plan_pending' if opts[:case_permissions]&.include?('approve_case_plan')
+  actions << 'dash_approvals_closure' if opts[:case_permissions]&.include?('request_approval_closure')
+  actions << 'dash_approvals_closure_pending' if opts[:case_permissions]&.include?('approve_closure')
+  actions
+end
+
+def permission_actions_dashboard_task_overdue(field_names)
+  new_actions = []
+  new_actions << 'dash_cases_by_task_overdue_assessment' if field_names.include?('assessment_requested_on')
+  new_actions << 'dash_cases_by_task_overdue_case_plan' if field_names.include?('case_plan_due_date')
+
+  # TODO: need System Settings value for this one
+  # new_actions << 'dash_cases_by_task_overdue_services' if field_names.include?('')
+
+  new_actions << 'dash_cases_by_task_overdue_followups' if field_names.include?('followup_needed_by_date')
+  new_actions
+end
+
+def permission_actions_form_dependent(actions, opts = {})
+  fs = opts[:permitted_form_ids].present? ? forms_with_subforms.select { |k,_| opts[:permitted_form_ids].include?(k) } : forms_with_subforms
+  return [] if fs.blank?
+
+  field_names = fs.map {|_,v| v.map {|form| form.fields.map { |field| field.name if field.visible? }}}.flatten.compact
+  new_actions = []
+  new_actions += permission_actions_dashboard_task_overdue(field_names) if actions.include?('dash_cases_by_task_overdue')
+  new_actions
 end
 
 def permission_actions_dashboard(actions, opts = {})
@@ -273,6 +299,7 @@ def permission_actions_dashboard(actions, opts = {})
   new_actions << 'dash_shared_with_me' if actions.include?('view_assessment ') || receive_permissions?(opts[:case_permissions])
   new_actions << 'dash_shared_with_others' if share_permissions?(opts[:case_permissions])
   new_actions += permission_actions_dashboard_approval(opts) if actions.include?('view_approvals')
+  new_actions += permission_actions_form_dependent(actions, opts)
   new_actions.uniq
 end
 
@@ -369,9 +396,9 @@ def configuration_hash_role(object)
   config_hash = object.attributes.except('id', 'permissions_list', 'permitted_form_ids').merge(unique_id(object)).with_indifferent_access
   config_hash['is_manager'] = ['all', 'group'].include?(object.group_permission)
   config_hash['module_unique_ids'] = role_module(object)
-  config_hash['permissions'] = role_permissions(object.permissions_list, form_restrictions: object.permitted_form_ids.present?,
+  config_hash['permissions'] = role_permissions(object.permissions_list, permitted_form_ids: object.permitted_form_ids,
                                                 group_permission: object.group_permission)
-  config_hash['form_section_unique_ids'] = role_forms(object.permitted_form_ids, config_hash['module_unique_ids'])
+  config_hash['form_section_unique_ids'] = role_forms(object.permitted_form_ids)
   config_hash
 end
 
