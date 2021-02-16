@@ -7,6 +7,9 @@
 
 require 'fileutils'
 
+INCIDENT_PERMISSIONS = %w[read create write flag export_list_view export_csv export_excel export_pdf export_json
+                          export_custom import sync_mobile change_log manage]
+
 def initialize(export_dir: 'seed-files', file: nil)
   @export_dir = export_dir
   FileUtils.mkdir_p(@export_dir)
@@ -353,12 +356,23 @@ def case_permissions(permissions)
   permissions.select{|p| p.resource == 'case'}.first&.actions
 end
 
-# TODO: tackle the long list of permission change requirements
+def add_incident_from_case?(permissions, permission, opts = {})
+  return false unless permission.resource == 'case' && permissions.map(&:resource).exclude?('incident')
+
+  form_ids = role_form_ids(opts[:permitted_form_ids])
+  form_ids&.include?('incident_details_container') ? true : false
+end
+
+def incident_permissions_from_case(permission)
+  permission.actions & INCIDENT_PERMISSIONS
+end
+
 def role_permissions(permissions, opts = {})
   object_hash = {}
   json_hash = permissions.inject({}) do |hash, permission|
     opts[:case_permissions] = case_permissions(permissions) if permission.resource == 'dashboard'
     hash[permission.resource] = permission_actions(permission, opts)
+    hash['incident'] = incident_permissions_from_case(permission) if add_incident_from_case?(permissions, permission, opts)
     object_hash[Permission::AGENCY] = permission.agency_ids if permission.agency_ids.present?
     object_hash[Permission::ROLE] = permission.role_ids if permission.role_ids.present?
     hash
