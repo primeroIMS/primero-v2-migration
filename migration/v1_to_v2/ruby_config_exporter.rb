@@ -203,8 +203,28 @@ def role_module(object)
   [PrimeroModule::CP]
 end
 
+def role_form_ids(permitted_form_ids)
+  permitted_form_ids.present? ? permitted_form_ids - retired_forms : nil
+end
+
 def role_forms(permitted_form_ids)
-  permitted_form_ids - retired_forms if permitted_form_ids.present?
+  permitted_form_ids.present? ? forms_with_subforms.select { |k,_| permitted_form_ids.include?(k) } : forms_with_subforms
+end
+
+def view_incident_from_case?(actions, opts = {})
+  forms = role_forms(opts[:permitted_form_ids])
+  return false if forms.blank?
+
+  form_ids = forms.values.flatten.map(&:unique_id)
+  if opts[:module_unique_ids].include?('primeromodule-cp')
+    return actions.include?('incident_from_case') && form_ids.include?('incident_details_container')
+  end
+
+  if opts[:module_unique_ids].include?('primeromodule-gbv')
+    return actions.include?('write') && form_ids.include?('action_plan_form')
+  end
+
+  false
 end
 
 def permission_actions_case(actions, opts = {})
@@ -218,6 +238,7 @@ def permission_actions_case(actions, opts = {})
   new_actions << 'close' if actions.include?('write')
   new_actions << 'enable_disable' if actions.include?('write')
   new_actions << 'change_log' if opts[:permitted_form_ids].blank?
+  new_actions << 'view_incident_from_case' if view_incident_from_case?(actions, opts)
   new_actions.uniq
 end
 
@@ -278,11 +299,13 @@ def permission_actions_dashboard_task_overdue(field_names)
 end
 
 def permission_actions_form_dependent(actions, opts = {})
-  fs = opts[:permitted_form_ids].present? ? forms_with_subforms.select { |k,_| opts[:permitted_form_ids].include?(k) } : forms_with_subforms
-  return [] if fs.blank?
+  forms = role_forms(opts[:permitted_form_ids])
+  return [] if forms.blank?
 
-  field_names = fs.map {|_,v| v.map {|form| form.fields.map { |field| field.name if field.visible? }}}.flatten.compact
+  form_ids = forms.values.flatten.map(&:unique_id)
+  field_names = forms.map {|_,v| v.map {|form| form.fields.map { |field| field.name if field.visible? }}}.flatten.compact
   new_actions = []
+  new_actions << 'dash_case_incident_overview' if form_ids.include?('incident_details_container')
   new_actions += permission_actions_dashboard_task_overdue(field_names) if actions.include?('dash_cases_by_task_overdue')
   new_actions
 end
@@ -399,8 +422,9 @@ def configuration_hash_role(object)
   config_hash['is_manager'] = ['all', 'group'].include?(object.group_permission)
   config_hash['module_unique_ids'] = role_module(object)
   config_hash['permissions'] = role_permissions(object.permissions_list, permitted_form_ids: object.permitted_form_ids,
-                                                group_permission: object.group_permission)
-  config_hash['form_section_unique_ids'] = role_forms(object.permitted_form_ids)
+                                                group_permission: object.group_permission,
+                                                module_unique_ids: config_hash['module_unique_ids'])
+  config_hash['form_section_unique_ids'] = role_form_ids(object.permitted_form_ids)
   config_hash
 end
 
