@@ -203,7 +203,7 @@ def role_module(object)
   [PrimeroModule::CP]
 end
 
-def role_form_ids(permitted_form_ids)
+def role_permitted_form_ids(permitted_form_ids)
   permitted_form_ids.present? ? permitted_form_ids - retired_forms : nil
 end
 
@@ -211,11 +211,17 @@ def role_forms(permitted_form_ids)
   permitted_form_ids.present? ? forms_with_subforms.select { |k,_| permitted_form_ids.include?(k) } : forms_with_subforms
 end
 
-def view_incident_from_case?(actions, opts = {})
-  forms = role_forms(opts[:permitted_form_ids])
-  return false if forms.blank?
+def role_form_ids(permitted_form_ids)
+  forms = role_forms(permitted_form_ids)
+  return [] if forms.blank?
 
-  form_ids = forms.values.flatten.map(&:unique_id)
+  forms.values.flatten.map(&:unique_id)
+end
+
+def view_incident_from_case?(actions, opts = {})
+  form_ids = role_form_ids(opts[:permitted_form_ids])
+  return false if form_ids.blank?
+
   if opts[:module_unique_ids].include?('primeromodule-cp')
     return actions.include?('incident_from_case') && form_ids.include?('incident_details_container')
   end
@@ -227,6 +233,15 @@ def view_incident_from_case?(actions, opts = {})
   false
 end
 
+def permission_actions_case_close_reopen(actions, opts = {})
+  return [] unless actions.include?('write')
+
+  form_ids = role_form_ids(opts[:permitted_form_ids])
+  return [] if form_ids.blank? || form_ids.exclude?('basic_identity')
+
+  ['close', 'reopen']
+end
+
 def permission_actions_case(actions, opts = {})
   return [] if actions.blank?
 
@@ -234,11 +249,10 @@ def permission_actions_case(actions, opts = {})
   new_actions << 'export_pdf' if (actions & %w[export_case_pdf export_child_pdf]).any?
   new_actions << 'request_approval_assessment' if actions.include?('request_approval_bia')
   new_actions << 'approve_assessment' if actions.include?('approve_bia')
-  new_actions << 'reopen' if actions.include?('write')
-  new_actions << 'close' if actions.include?('write')
   new_actions << 'enable_disable' if actions.include?('write')
   new_actions << 'change_log' if opts[:permitted_form_ids].blank?
   new_actions << 'view_incident_from_case' if view_incident_from_case?(actions, opts)
+  new_actions += permission_actions_case_close_reopen(actions, opts)
   new_actions.uniq
 end
 
@@ -424,7 +438,7 @@ def configuration_hash_role(object)
   config_hash['permissions'] = role_permissions(object.permissions_list, permitted_form_ids: object.permitted_form_ids,
                                                 group_permission: object.group_permission,
                                                 module_unique_ids: config_hash['module_unique_ids'])
-  config_hash['form_section_unique_ids'] = role_form_ids(object.permitted_form_ids)
+  config_hash['form_section_unique_ids'] = role_permitted_form_ids(object.permitted_form_ids)
   config_hash
 end
 
