@@ -468,6 +468,11 @@ def configuration_hash_field(field, collapsed_fields, form_unique_id)
                                         'create_property', 'subform_section_id').with_indifferent_access
   config_hash['collapsed_field_for_subform_unique_id'] = form_unique_id if collapsed_fields.include?(field.name)
   config_hash['subform_unique_id'] = field.subform_section_id if field.type == 'subform'
+  config_hash['disabled'] = false if field.type.include?('upload_box')
+  if form_unique_id == 'notes_section'
+    config_hash['name'] = 'note_date' if config_hash['name'] == 'notes_date'
+    config_hash['name'] = 'note_text' if config_hash['name'] == 'field_notes_subform_fields'
+  end
   config_hash
 end
 
