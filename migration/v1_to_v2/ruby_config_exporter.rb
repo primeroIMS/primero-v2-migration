@@ -7,14 +7,6 @@
 
 require 'fileutils'
 
-def initialize(export_dir: 'seed-files', file: nil)
-  @export_dir = export_dir
-  FileUtils.mkdir_p(@export_dir)
-  @file = file
-  FileUtils.rm("#{@export_dir}/#{@file}") if @file && File.exist?("#{@export_dir}/#{@file}")
-  @indent = 0
-end
-
 def i
   '  ' * @indent
 end
@@ -28,8 +20,6 @@ def i_
 end
 
 def file_for(config_name, config_objects = nil)
-  return "#{@export_dir}/#{@file}" if @file
-
   if config_name == 'FormSection' && config_objects.present?
     config_dir = "#{@export_dir}/forms/#{config_objects.last['parent_form']}"
     FileUtils.mkdir_p(config_dir)
@@ -277,7 +267,10 @@ end
 ###################################
 # Beginning of script
 ###################################
-initialize
+@indent = 0
+@export_dir = 'seed-files'
+FileUtils.mkdir_p(@export_dir)
+
 
 # TODO: Location, Role, User(?)
 %w[Agency Lookup Report UserGroup PrimeroModule PrimeroProgram SystemSettings ContactInformation ExportConfiguration].each do |config_name|
