@@ -38,15 +38,6 @@ require File.dirname(__FILE__) + '/export_configurations/export_configuration.rb
 puts 'Seeding System Settings'
 require File.dirname(__FILE__) + '/system_settings/system_settings.rb'
 
-# TODO
-puts 'WARNING! Seeding Identity Providers is turned off!'
-# Seed the identity providers table
-# primero_id_external = ENV['PRIMERO_ID_EXTERNAL'] == 'true'
-# if primero_id_external
-#   puts 'Seeding the identity providers'
-#   require File.dirname(__FILE__) + '/system_settings/idp.rb'
-# end
-
 # Create the forms
 puts '[Re-]Seeding the Forms'
 Dir[File.dirname(__FILE__) + '/forms/*/*.rb'].sort.each(&method(:require))
