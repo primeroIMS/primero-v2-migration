@@ -18,6 +18,8 @@ def file_for(record_type)
 end
 
 def export_record_objects(record_type, objects)
+  return if objects.blank?
+
   File.open(file_for(record_type), 'a') { |f| f << JSON.pretty_generate(objects) }
 end
 
@@ -30,11 +32,12 @@ end
 
 def record_hash_child(object)
   # TODO: WIP
+  # TODO: need to figure out how to migrate attachments.  Is that a different ticket?
   record_hash = JSON.parse(object.to_json)
   keys = record_hash.keys
   record_hash['notes_section'] = migrate_notes(record_hash['notes_section']) if record_hash['notes_section'].present?
   record_hash['unhcr_export_opt_in'] = !record_hash.delete('unhcr_export_opt_out') if keys.include?('unhcr_export_opt_out')
-  
+  record_hash['status'] = record_hash.delete('child_status')
   record_hash
 end
 
@@ -44,8 +47,10 @@ def record_hash_incident(object)
 end
 
 def record_hash_tracing_request(object)
-  # TODO
-  JSON.parse(object.to_json)
+  # TODO: WIP
+  record_hash = JSON.parse(object.to_json)
+  record_hash['status'] = record_hash.delete('inquiry_status')
+  record_hash
 end
 
 def record_objects(record_type)
