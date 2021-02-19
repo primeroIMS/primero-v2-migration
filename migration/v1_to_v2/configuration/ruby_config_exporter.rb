@@ -10,14 +10,6 @@ require 'fileutils'
 INCIDENT_PERMISSIONS = %w[read create write flag export_list_view export_csv export_excel export_pdf export_json
                           export_custom import sync_mobile change_log manage]
 
-def initialize(export_dir: 'seed-files', file: nil)
-  @export_dir = export_dir
-  FileUtils.mkdir_p(@export_dir)
-  @file = file
-  FileUtils.rm("#{@export_dir}/#{@file}") if @file && File.exist?("#{@export_dir}/#{@file}")
-  @indent = 0
-end
-
 def i
   '  ' * @indent
 end
@@ -31,8 +23,6 @@ def i_
 end
 
 def file_for(config_name, config_objects = nil)
-  return "#{@export_dir}/#{@file}" if @file
-
   if config_name == 'FormSection' && config_objects.present?
     config_dir = "#{@export_dir}/forms/#{config_objects.last['parent_form']}"
     FileUtils.mkdir_p(config_dir)
@@ -500,7 +490,10 @@ end
 ###################################
 # Beginning of script
 ###################################
-initialize
+@indent = 0
+@export_dir = 'seed-files'
+FileUtils.mkdir_p(@export_dir)
+
 
 #SystemSettings goes first because Role depends on it
 export_config_objects('SystemSettings', [configuration_hash_system_settings(system_settings)])
