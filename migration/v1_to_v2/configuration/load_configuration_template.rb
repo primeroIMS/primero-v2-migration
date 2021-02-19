@@ -49,10 +49,8 @@ require File.dirname(__FILE__) + '/primero_programs/primero_program.rb'
 puts 'Seeding Modules'
 require File.dirname(__FILE__) + '/primero_modules/primero_module.rb'
 
-# TODO
-puts 'WARNING! Seeding Roles is turned off!'
-# puts 'Seeding Roles'
-# require File.dirname(__FILE__) + '/users/roles.rb'
+puts 'Seeding Roles'
+require File.dirname(__FILE__) + '/roles/role.rb'
 
 puts 'Seeding Agencies'
 require File.dirname(__FILE__) + '/agencies/agency.rb'
