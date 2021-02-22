@@ -4,23 +4,14 @@
 
 require 'fileutils'
 
-def initialize(export_dir: 'record-data-files', file: nil)
-  @export_dir = export_dir
-  FileUtils.mkdir_p(@export_dir)
-  @file = file
-  FileUtils.rm("#{@export_dir}/#{@file}") if @file && File.exist?("#{@export_dir}/#{@file}")
+def file_for(record_type, i)
+  "#{@export_dir}/#{record_type.underscore}#{i}.json"
 end
 
-def file_for(record_type)
-  return "#{@export_dir}/#{@file}" if @file
-
-  "#{@export_dir}/#{record_type.underscore}.json"
-end
-
-def export_record_objects(record_type, objects)
+def export_record_objects(record_type, objects, i)
   return if objects.blank?
 
-  File.open(file_for(record_type), 'a') { |f| f << JSON.pretty_generate(objects) }
+  File.open(file_for(record_type, i), 'a') { |f| f << JSON.pretty_generate(objects) }
 end
 
 def migrate_notes(notes)
@@ -53,15 +44,24 @@ def record_hash_tracing_request(object)
   record_hash
 end
 
-def record_objects(record_type)
-  Object.const_get(record_type).all.map { |object| send("record_hash_#{record_type.underscore}", object) }
+def record_objects(record_type, objects)
+  objects.map { |object| send("record_hash_#{record_type.underscore}", object)&.reject { |_, v| v.nil? || v == [] } }
+end
+
+def export_records(record_type)
+  i = 0
+  Object.const_get(record_type).each_slice do |objects|
+    export_record_objects(record_type, record_objects(record_type, objects), i)
+    i += 1
+  end
 end
 
 ###################################
 # Beginning of script
 ###################################
-initialize
+@export_dir = 'record-data-files'
+FileUtils.mkdir_p(@export_dir)
 
 %w[Child Incident TracingRequest].each do |record_type|
-  export_record_objects(record_type, record_objects(record_type))
+  export_records(record_type)
 end
