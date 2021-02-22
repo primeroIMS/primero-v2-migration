@@ -202,7 +202,7 @@ end
 def role_permitted_form_hash(permitted_form_ids)
   # The nil is necessary to distinguish between roles that have no form restrictions vs roles that have form
   # restrictions, but all of their allowed forms are retired.
-  permitted_form_ids.present? ? (permitted_form_ids - retired_forms).map { |f| [f, 'r,w'] }.to_h : nil
+  permitted_form_ids.present? ? (permitted_form_ids - retired_forms).map { |f| [f, 'rw'] }.to_h : nil
 end
 
 def role_forms(permitted_form_ids)
