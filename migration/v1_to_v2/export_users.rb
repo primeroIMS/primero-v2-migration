@@ -47,7 +47,7 @@ def write_user_hash(file, user)
     user.position.present? ? "   position: \"#{user.position}\"," : nil,
     user.location.present? ? "   location: \"#{user.location}\"," : nil,
     user.user_group_ids.present? ? "   user_groups: #{user.user_group_ids}.map { |unique_id| @user_groups[unique_id] }.compact," : nil,
-    user.locale.present? ? "   locale: \"#{user.locale || 'en'}\"" : nil,
+    user.locale.present? ? "   locale: \"#{user.locale}\"" : nil,
     "},",
   ].compact.join("\n")
 
