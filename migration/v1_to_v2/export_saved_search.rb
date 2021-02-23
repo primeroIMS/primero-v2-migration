@@ -31,13 +31,48 @@ end
   "incident" => "incidents"
 }
 
+def convert_array_value(filter_value)
+  case filter_value.first
+  when "list" then [filter_value.last]
+  when "range" then [filter_value.last.split("-").map(&:strip).join("..")]
+  when "date_range"
+    dates = filter_value.last.split(".").map do |date|
+      DateTime.parse(date).utc.strftime('%Y-%m-%dT%H:%M:%SZ')
+    end
+
+    [dates.join("..")]
+  when "location" then [filter_value.last]
+  when "single" then ["true"]
+  else
+    filter_value
+  end
+end
+
+def convert_hash_value(filter_value)
+  if filter_value.values.flatten.first == "or_op"
+    { name: "or", value: { [filter_value.keys.first] => filter_value.values.flatten.last } }
+  else
+    filter_value
+  end
+end
+
+def to_v2_filters(filters)
+  filters.map do |filter|
+    filter_value = filter["value"]
+    next(filter.merge(convert_hash_value(filter_value))) if filter_value.is_a?(Hash)
+
+    value = convert_array_value(filter_value)
+    filter.merge({ "value" => value })
+  end
+end
+
 def write_saved_search(file, saved_search)
   saved_search_hash = [
     "  SavedSearch.new_with_user(",
     "    User.find_by(user_name: \"#{saved_search.user_name}\"),",
     "    { ",
     "      record_type: \"#{@record_type_mapping[saved_search.record_type]}\",",
-    "      filters: #{saved_search.filters.as_json},",
+    "      filters: #{to_v2_filters(saved_search.filters)},",
     "      module_id: #{saved_search.module_id},",
     "      name: \"#{saved_search.name}\"",
     "    }",
