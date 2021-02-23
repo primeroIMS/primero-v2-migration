@@ -7,9 +7,6 @@
 
 require 'fileutils'
 
-INCIDENT_PERMISSIONS = %w[read create write flag export_list_view export_csv export_excel export_pdf export_json
-                          export_custom import sync_mobile change_log manage]
-
 def i
   '  ' * @indent
 end
@@ -37,7 +34,7 @@ end
 # These forms are now hard coded in v2 and the form configs are no longer needed
 def retired_forms
   %w[approvals approval_subforms referral_transfer record_owner incident_record_owner cp_incident_record_owner
-     transitions]
+     transitions reopened_logs]
 end
 
 def forms_with_subforms
@@ -46,6 +43,9 @@ def forms_with_subforms
   fs = FormSection.all.reject(&:is_nested).group_by(&:unique_id)
   grouped_forms = {}
   fs.each do |k, v|
+    # Hide the Incident Details form
+    v.first.visible = false if k == 'incident_details_container'
+
     grouped_forms[k] = v + FormSection.get_subforms(v) unless retired_forms.include?(v.first.unique_id)
   end
   @forms_with_subforms = grouped_forms.map do |unique_id, form_and_subforms|
@@ -69,7 +69,10 @@ def config_to_ruby_string(config_name, config_hash)
   ruby_string += "#{i}#{value_to_ruby_string(config_hash)}"
   i_
   ruby_string += "\n#{i})\n"
-  ruby_string += role_form_ruby_string(config_hash['unique_id']) + "\n" if config_name == 'Role' && config_hash['form_section_unique_ids'].blank?
+
+  # The nil is necessary to distinguish between roles that have no form restrictions vs roles that have form
+  # restrictions, but all of their allowed forms are retired.
+  ruby_string += role_form_ruby_string(config_hash['unique_id']) + "\n" if config_name == 'Role' && config_hash['form_section_read_write'].nil?
   ruby_string + "\n"
 end
 
@@ -196,8 +199,10 @@ def role_module(object)
   [PrimeroModule::CP]
 end
 
-def role_permitted_form_ids(permitted_form_ids)
-  permitted_form_ids.present? ? permitted_form_ids - retired_forms : nil
+def role_permitted_form_hash(permitted_form_ids)
+  # The nil is necessary to distinguish between roles that have no form restrictions vs roles that have form
+  # restrictions, but all of their allowed forms are retired.
+  permitted_form_ids.present? ? (permitted_form_ids - retired_forms).map { |f| [f, 'rw'] }.to_h : nil
 end
 
 def role_forms(permitted_form_ids)
@@ -211,19 +216,21 @@ def role_form_ids(permitted_form_ids)
   forms.values.flatten.map(&:unique_id)
 end
 
-def view_incident_from_case?(actions, opts = {})
+def incident_from_case?(actions, opts = {})
   form_ids = role_form_ids(opts[:permitted_form_ids])
   return false if form_ids.blank?
 
-  if opts[:module_unique_ids].include?('primeromodule-cp')
-    return actions.include?('incident_from_case') && form_ids.include?('incident_details_container')
-  end
+  (opts[:module_unique_ids].include?('primeromodule-cp') && form_ids.include?('incident_details_container')) ||
+  (opts[:module_unique_ids].include?('primeromodule-gbv') && actions.include?('write') && form_ids.include?('action_plan_form'))
+end
 
-  if opts[:module_unique_ids].include?('primeromodule-gbv')
-    return actions.include?('write') && form_ids.include?('action_plan_form')
-  end
+def permission_actions_incident_from_case(actions, opts = {})
+  return [] unless incident_from_case?(actions, opts)
 
-  false
+  new_actions = []
+  new_actions << 'view_incident_from_case' if actions.include?('read')
+  new_actions << 'incident_from_case'  if (actions & %w[create write]).any?
+  new_actions
 end
 
 def permission_actions_case_close_reopen(actions, opts = {})
@@ -244,7 +251,7 @@ def permission_actions_case(actions, opts = {})
   new_actions << 'approve_assessment' if actions.include?('approve_bia')
   new_actions << 'enable_disable' if actions.include?('write')
   new_actions << 'change_log' if opts[:permitted_form_ids].blank?
-  new_actions << 'view_incident_from_case' if view_incident_from_case?(actions, opts)
+  new_actions += permission_actions_incident_from_case(actions, opts)
   new_actions += permission_actions_case_close_reopen(actions, opts)
   new_actions.uniq
 end
@@ -262,7 +269,7 @@ end
 def permission_actions_tracing_request(actions, opts = {})
   return [] if actions.blank?
 
-  new_actions = actions - %w[export_photowall export_unhcr_csv assign]
+  new_actions = actions - %w[export_photowall export_unhcr_csv assign export_xls]
   new_actions << 'enable_disable' if actions.include?('write')
   new_actions << 'change_log' if opts[:permitted_form_ids].blank?
   new_actions.uniq
@@ -282,12 +289,12 @@ end
 
 def permission_actions_dashboard_approval(opts = {})
   actions = []
-  actions << 'dash_approvals_assessment' if opts[:case_permissions]&.include?('request_approval_bia')
-  actions << 'dash_approvals_assessment_pending' if opts[:case_permissions]&.include?('approve_bia')
-  actions << 'dash_approvals_case_plan' if opts[:case_permissions]&.include?('request_approval_case_plan')
-  actions << 'dash_approvals_case_plan_pending' if opts[:case_permissions]&.include?('approve_case_plan')
-  actions << 'dash_approvals_closure' if opts[:case_permissions]&.include?('request_approval_closure')
-  actions << 'dash_approvals_closure_pending' if opts[:case_permissions]&.include?('approve_closure')
+  actions << 'approvals_assessment' if opts[:case_permissions]&.include?('request_approval_bia')
+  actions << 'approvals_assessment_pending' if opts[:case_permissions]&.include?('approve_bia')
+  actions << 'approvals_case_plan' if opts[:case_permissions]&.include?('request_approval_case_plan')
+  actions << 'approvals_case_plan_pending' if opts[:case_permissions]&.include?('approve_case_plan')
+  actions << 'approvals_closure' if opts[:case_permissions]&.include?('request_approval_closure')
+  actions << 'approvals_closure_pending' if opts[:case_permissions]&.include?('approve_closure')
   actions
 end
 
@@ -317,22 +324,40 @@ def permission_actions_form_dependent(actions, opts = {})
   new_actions
 end
 
+def permission_actions_dashboard_shared(opts = {})
+  new_actions = []
+  new_actions << 'dash_shared_with_me' if opts[:view_assessment] || receive_permissions?(opts[:case_permissions])
+  new_actions << 'dash_shared_with_others' if share_permissions?(opts[:case_permissions])
+  new_actions
+end
+
+def permission_actions_dashboard_overview(opts = {})
+  new_actions = []
+  new_actions << 'dash_case_overview' if opts[:group_permission] == 'self'
+  new_actions << 'dash_group_overview' if ['group', 'all'].include?(opts[:group_permission])
+  new_actions
+end
+
 def permission_actions_dashboard(actions, opts = {})
   return [] if actions.blank?
 
   new_actions = actions - %w[view_approvals view_assessment dash_cases_by_workflow dash_cases_by_task_overdue
                              dash_manager_transfers dash_referrals_by_socal_worker dash_transfers_by_socal_worker]
-  new_actions << 'dash_case_risk' if actions.include?('view_assessment')
+  new_actions << 'case_risk' if actions.include?('view_assessment')
   new_actions << 'dash_workflow_team' if actions.include?('dash_cases_by_workflow')
   new_actions << 'dash_shared_with_my_team' if actions.include?('dash_referrals_by_socal_worker')
   new_actions << 'dash_shared_from_my_team' if actions.include?('dash_transfers_by_socal_worker')
-  new_actions << 'dash_case_overview' if opts[:group_permission] == 'self'
-  new_actions << 'dash_group_overview' if opts[:group_permission] == 'group'
-  new_actions << 'dash_shared_with_me' if actions.include?('view_assessment ') || receive_permissions?(opts[:case_permissions])
-  new_actions << 'dash_shared_with_others' if share_permissions?(opts[:case_permissions])
+  new_actions += permission_actions_dashboard_overview(opts)
+  new_actions += permission_actions_dashboard_shared(view_assessment: actions.include?('view_assessment'), case_permissions: opts[:case_permissions])
   new_actions += permission_actions_dashboard_approval(opts) if actions.include?('view_approvals')
   new_actions += permission_actions_form_dependent(actions, opts)
   new_actions.uniq
+end
+
+def default_dashboard_permissions(opts = {})
+  new_actions = permission_actions_dashboard_overview(opts)
+  new_actions += permission_actions_dashboard_shared(view_assessment: false, case_permissions: opts[:case_permissions])
+  new_actions
 end
 
 def permission_actions(permission, opts = {})
@@ -353,8 +378,11 @@ def add_incident_from_case?(permissions, permission, opts = {})
   form_ids&.include?('incident_details_container') ? true : false
 end
 
-def incident_permissions_from_case(permission)
-  permission.actions & INCIDENT_PERMISSIONS
+def incident_permissions_from_case(case_permission)
+  new_actions = []
+  new_actions << 'read' if case_permission.actions.include?('read')
+  new_actions << 'write' if (case_permission.actions & %w[create write]).any?
+  new_actions
 end
 
 def role_permissions(permissions, opts = {})
@@ -366,6 +394,10 @@ def role_permissions(permissions, opts = {})
     object_hash[Permission::AGENCY] = permission.agency_ids if permission.agency_ids.present?
     object_hash[Permission::ROLE] = permission.role_ids if permission.role_ids.present?
     hash
+  end
+  if json_hash.keys.exclude?('dashboard')
+    opts[:case_permissions] = case_permissions(permissions)
+    json_hash['dashboard'] = default_dashboard_permissions(opts)
   end
   json_hash['objects'] = object_hash
   json_hash
@@ -442,7 +474,7 @@ def configuration_hash_role(object)
   config_hash['permissions'] = role_permissions(object.permissions_list, permitted_form_ids: object.permitted_form_ids,
                                                 group_permission: object.group_permission,
                                                 module_unique_ids: config_hash['module_unique_ids'])
-  config_hash['form_section_unique_ids'] = role_permitted_form_ids(object.permitted_form_ids)
+  config_hash['form_section_read_write'] = role_permitted_form_hash(object.permitted_form_ids)
   config_hash
 end
 
@@ -468,6 +500,7 @@ def configuration_hash_field(field, collapsed_fields, form_unique_id)
   config_hash['name'] = 'unhcr_export_opt_in' if config_hash['name'] == 'unhcr_export_opt_out'
   config_hash['name'] = config_hash['name'].gsub(/bia/, 'assessment') if config_hash['name'].include?('bia_approved')
   config_hash['name'] = 'approval_status_assessment' if config_hash['name'] == 'approval_status_bia'
+  config_hash['option_strings_source'] = field.option_strings_source.split(' ').first if field.option_strings_source&.include?('use_api')
   config_hash
 end
 
