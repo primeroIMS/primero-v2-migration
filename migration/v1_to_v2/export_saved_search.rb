@@ -26,12 +26,17 @@ def write_initializers(file)
   file.write(initializers)
 end
 
+@record_type_mapping = {
+  "child" => "cases",
+  "incident" => "incidents"
+}
+
 def write_saved_search(file, saved_search)
   saved_search_hash = [
     "  SavedSearch.new_with_user(",
     "    User.find_by(user_name: \"#{saved_search.user_name}\"),",
     "    { ",
-    "      record_type: \"#{saved_search.record_type}\",",
+    "      record_type: \"#{@record_type_mapping[saved_search.record_type]}\",",
     "      filters: #{saved_search.filters.as_json},",
     "      module_id: #{saved_search.module_id},",
     "      name: \"#{saved_search.name}\"",
