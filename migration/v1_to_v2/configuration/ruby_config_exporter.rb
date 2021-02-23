@@ -463,6 +463,11 @@ def configuration_hash_field(field, collapsed_fields, form_unique_id)
     config_hash['name'] = 'note_date' if config_hash['name'] == 'notes_date'
     config_hash['name'] = 'note_text' if config_hash['name'] == 'field_notes_subform_fields'
   end
+  config_hash['name'] = 'other_documents' if config_hash['name'] == 'upload_other_document'
+  config_hash['name'] = 'status' if config_hash['name'] == 'child_status'
+  config_hash['name'] = 'unhcr_export_opt_in' if config_hash['name'] == 'unhcr_export_opt_out'
+  config_hash['name'] = config_hash['name'].gsub(/bia/, 'assessment') if config_hash['name'].include?('bia_approved')
+  config_hash['name'] = 'approval_status_assessment' if config_hash['name'] == 'approval_status_bia'
   config_hash
 end
 
