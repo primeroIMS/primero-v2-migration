@@ -485,22 +485,116 @@ def configuration_hash_form_section(object)
   config_hash
 end
 
+def option_strings_care_arrangements_type
+  [
+    { id: 'parent_s', display_text: 'Parent(s)' },
+    { id: 'step_parent', display_text: 'Step parent' },
+    { id: 'customary_caregiver_s', display_text: 'Customary caregiver(s)' },
+    { id: 'adult_sibling', display_text: 'Adult sibling' },
+    { id: 'kinship_care_extended_family', display_text: 'Kinship care / extended family' },
+    { id: 'foster_care', display_text: 'Foster care' },
+    { id: 'residential_care', display_text: 'Residential care' },
+    { id: 'kafala', display_text: 'Kafala' },
+    { id: 'independent_living', display_text: 'Independent living' },
+    { id: 'child_headed_household', display_text: 'Child-headed household' },
+    { id: 'unrelated_adult', display_text: 'Unrelated adult' },
+    { id: 'no_care_arrangement', display_text: 'No care arrangement' },
+    { id: 'other', display_text: 'Other' }
+  ].map(&:with_indifferent_access)
+end
+
+def option_strings_caregiver_willing_to_continue
+  [
+    { id: 'yes_short_term', display_text: 'Yes, short-term' },
+    { id: 'yes_long_term', display_text: 'Yes, long-term' },
+    { id: 'no', display_text: 'No' }
+  ].map(&:with_indifferent_access)
+end
+
+def option_strings_closure_reason
+  [
+    { id: 'overall_goal_of_the_case_plan', display_text: "Overall goal of the case plan has been met, child is safe from harm, child's care and wellbeing is supported and there are no additional concerns" },
+    { id: 'child_has_turned_18_years_old', display_text: 'Child has turned 18 years-old (ensure a transition plan is in place and the case know where and how to access support)' },
+    { id: 'relocation_of_child_to_an_area', display_text: 'Relocation of child to an area where there is no agency to transfer the case to' },
+    { id: 'child_departed_for_a_durable_solution', display_text: 'Child departed for a durable solution where there is no agency to transfer the case to' },
+    { id: 'child_no_longer_contactable', display_text: 'Child no longer contactable (wait at least 3 months before closing the case)' },
+    { id: 'death_of_child', display_text: 'Death of child' },
+    { id: 'no_further_action_possible_required', display_text: 'No further action possible/required' },
+    { id: 'case_opened_in_error', display_text: 'Case opened in error' },
+    { id: 'other', display_text: 'Other' }
+  ].map(&:with_indifferent_access)
+end
+
+def option_strings_conference_reason
+  [
+    { id: 'potential_removal_of_a_child_from_thei_caregiver', display_text: 'Potential removal of a child from their primary/customary/legal caregiver (authorized by Government authority)' },
+    { id: 'placement_of_a_child_into_alternative_care', display_text: 'Placement of a child into alternative care' },
+    { id: 'situation_of_family_reunification_with_potential_harm_to_the_child', display_text: 'Situation of family reunification with potential harm to the child' },
+    { id: 'relocation_of_the_child', display_text: 'Relocation of the child' },
+    { id: 'complex_child_protection_case_requiring_a_multi_partner_intervention', display_text: 'Complex child protection case requiring a multi-partner intervention' },
+    { id: 'other', display_text: 'Other' }
+  ].map(&:with_indifferent_access)
+end
+
+def option_strings_interview_subject
+  [
+    { id: 'child', display_text: 'Child' },
+    { id: 'caregiver', display_text: 'Caregiver' },
+    { id: 'other', display_text: 'Other' }
+  ].map(&:with_indifferent_access)
+end
+
+def option_strings_source_interview
+  [
+    { id: 'child', display_text: 'Child' },
+    { id: 'caregiver', display_text: 'Caregiver' },
+    { id: 'other', display_text: 'Other, please specify' }
+  ].map(&:with_indifferent_access)
+end
+
+def field_options_changed
+  %w[care_arrangements_type caregiver_willing_to_continue closure_reason conference_reason interview_subject source_interview]
+end
+
+def field_remove_option_strings
+  %w[caregiver_willing_to_continue]
+end
+
+def configuration_hash_field_name(config_hash, form_unique_id)
+  if form_unique_id == 'notes_section'
+    config_hash['name'] = 'note_date' if config_hash['name'] == 'notes_date'
+    config_hash['name'] = 'note_text' if config_hash['name'] == 'field_notes_subform_fields'
+  end
+  config_hash['name'] = 'other_documents' if config_hash['name'] == 'upload_other_document'
+  config_hash['name'] = 'status' if %w[child_status inquiry_status].include?(config_hash['name'])
+  config_hash['name'] = 'unhcr_export_opt_in' if config_hash['name'] == 'unhcr_export_opt_out'
+  config_hash['name'] = config_hash['name'].gsub(/bia/, 'assessment') if config_hash['name'].include?('bia_approved')
+  config_hash['name'] = 'approval_status_assessment' if config_hash['name'] == 'approval_status_bia'
+  config_hash['name'] = 'short_id' if config_hash['name'] == 'cp_short_id'
+  config_hash
+end
+
+def configuration_hash_field_option_strings(config_hash, field)
+  config_hash['option_strings_source'] = field.option_strings_source.split(' ').first if field.option_strings_source&.include?('use_api')
+  config_hash['option_strings_source'] = 'lookup lookup-country' if config_hash['name'] == 'relation_nationality'
+  config_hash['option_strings_source'] = nil if field_remove_option_strings.include?(config_hash['name'])
+  if field_options_changed.include?(config_hash['name'])
+    I18n.available_locales.map { |locale| config_hash["option_strings_text_#{locale}"] = nil }
+    config_hash['option_strings_text_en'] = send("option_strings_#{config_hash['name']}")
+  end
+  config_hash
+end
+
 def configuration_hash_field(field, collapsed_fields, form_unique_id)
   config_hash = field.attributes.except('id', 'highlight_information', 'base_language', 'deletable', 'searchable_select',
                                         'create_property', 'subform_section_id').with_indifferent_access
   config_hash['collapsed_field_for_subform_unique_id'] = form_unique_id if collapsed_fields.include?(field.name)
   config_hash['subform_unique_id'] = field.subform_section_id if field.type == 'subform'
   config_hash['disabled'] = false if field.type.include?('upload_box')
-  if form_unique_id == 'notes_section'
-    config_hash['name'] = 'note_date' if config_hash['name'] == 'notes_date'
-    config_hash['name'] = 'note_text' if config_hash['name'] == 'field_notes_subform_fields'
-  end
-  config_hash['name'] = 'other_documents' if config_hash['name'] == 'upload_other_document'
-  config_hash['name'] = 'status' if config_hash['name'] == 'child_status'
-  config_hash['name'] = 'unhcr_export_opt_in' if config_hash['name'] == 'unhcr_export_opt_out'
-  config_hash['name'] = config_hash['name'].gsub(/bia/, 'assessment') if config_hash['name'].include?('bia_approved')
-  config_hash['name'] = 'approval_status_assessment' if config_hash['name'] == 'approval_status_bia'
-  config_hash['option_strings_source'] = field.option_strings_source.split(' ').first if field.option_strings_source&.include?('use_api')
+  config_hash = configuration_hash_field_name(config_hash, form_unique_id)
+  config_hash = configuration_hash_field_option_strings(config_hash, field)
+
+  #TODO: remove option strings ar-JO
   config_hash
 end
 
