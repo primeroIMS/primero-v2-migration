@@ -7,6 +7,7 @@ class FormConfigExporter < ConfigurationExporter
   def export
     forms_with_subforms.each do |_, form_with_subforms|
       forms_hash = form_with_subforms.map { |form| configuration_hash_form_section(form) }
+      puts "Exporting Form #{forms_hash.first['unique_id']}"
       export_config_objects('FormSection', forms_hash)
     end
   end

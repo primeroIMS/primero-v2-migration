@@ -11,7 +11,10 @@ class ConfigurationExporter
   end
 
   def export
-    config_object_names.each { |config_name| export_config_objects(config_name, config_objects(config_name)) }
+    config_object_names.each do |config_name|
+      puts "Exporting #{config_name.pluralize}"
+      export_config_objects(config_name, config_objects(config_name))
+    end
   end
 
   private
@@ -58,7 +61,6 @@ class ConfigurationExporter
   end
 
   def export_config_objects(config_name, objects)
-    puts "Exporting #{config_name.pluralize}"
     file_name = file_for(config_name: config_name, config_objects: objects)
     File.open(file_name, 'a') do |f|
       objects.each do |config_object|

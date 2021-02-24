@@ -138,10 +138,10 @@ class RoleConfigExporter < ConfigurationExporter
 
   def permission_actions_dashboard_task_overdue(field_names)
     new_actions = []
-    new_actions << 'dash_cases_by_task_overdue_assessment' if field_names.include?('assessment_requested_on')
-    new_actions << 'dash_cases_by_task_overdue_case_plan' if field_names.include?('case_plan_due_date')
-    new_actions << 'dash_cases_by_task_overdue_services' if permission_task_overdue_services?(field_names)
-    new_actions << 'dash_cases_by_task_overdue_followups' if field_names.include?('followup_needed_by_date')
+    new_actions << 'cases_by_task_overdue_assessment' if field_names.include?('assessment_requested_on')
+    new_actions << 'cases_by_task_overdue_case_plan' if field_names.include?('case_plan_due_date')
+    new_actions << 'cases_by_task_overdue_services' if permission_task_overdue_services?(field_names)
+    new_actions << 'cases_by_task_overdue_followups' if field_names.include?('followup_needed_by_date')
     new_actions
   end
 
@@ -166,7 +166,7 @@ class RoleConfigExporter < ConfigurationExporter
 
   def permission_actions_dashboard_overview(opts = {})
     new_actions = []
-    new_actions << 'dash_case_overview' if opts[:group_permission] == 'self'
+    new_actions << 'case_overview' if opts[:group_permission] == 'self'
     new_actions << 'dash_group_overview' if %w[group all].include?(opts[:group_permission])
     new_actions
   end
@@ -177,7 +177,7 @@ class RoleConfigExporter < ConfigurationExporter
     new_actions = actions - %w[view_approvals view_assessment dash_cases_by_workflow dash_cases_by_task_overdue
                                dash_manager_transfers dash_referrals_by_socal_worker dash_transfers_by_socal_worker]
     new_actions << 'case_risk' if actions.include?('view_assessment')
-    new_actions << 'dash_workflow_team' if actions.include?('dash_cases_by_workflow')
+    new_actions << 'workflow_team' if actions.include?('dash_cases_by_workflow')
     new_actions << 'dash_shared_with_my_team' if actions.include?('dash_referrals_by_socal_worker')
     new_actions << 'dash_shared_from_my_team' if actions.include?('dash_transfers_by_socal_worker')
     new_actions += permission_actions_dashboard_overview(opts)
