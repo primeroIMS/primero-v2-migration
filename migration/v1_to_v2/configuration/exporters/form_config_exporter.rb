@@ -1,10 +1,9 @@
 # frozen_string_literal: true
 
-# Exports the current state of the Primero roles configuration as v2 compatible Ruby scripts.
 require File.dirname(__FILE__) + '/configuration_exporter.rb'
 
+# Exports the current v1 state of the Primero forms configuration as v2 compatible Ruby scripts.
 class FormConfigExporter < ConfigurationExporter
-
   def export
     forms_with_subforms.each do |_, form_with_subforms|
       forms_hash = form_with_subforms.map { |form| configuration_hash_form_section(form) }
@@ -25,7 +24,9 @@ class FormConfigExporter < ConfigurationExporter
   def configuration_hash_form_section(object)
     config_hash = object.attributes.except('id', 'fields', 'base_language', 'collapsed_fields', 'fixed_order',
                                            'perm_visible', 'perm_enabled', 'validations')
-    config_hash['fields_attributes'] = object.fields.map { |field| configuration_hash_field(field, object.collapsed_fields, object.unique_id) }
+    config_hash['fields_attributes'] = object.fields.map do |field|
+      configuration_hash_field(field, object.collapsed_fields, object.unique_id)
+    end
     config_hash
   end
 

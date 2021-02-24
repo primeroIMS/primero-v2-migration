@@ -1,10 +1,9 @@
 # frozen_string_literal: true
 
-# Exports the current state of the Primero roles configuration as v2 compatible Ruby scripts.
 require File.dirname(__FILE__) + '/configuration_exporter.rb'
 
+# Exports the current v1 state of the Primero roles configuration as v2 compatible Ruby scripts.
 class RoleConfigExporter < ConfigurationExporter
-
   private
 
   def config_to_ruby_string(config_name, config_hash)
@@ -40,7 +39,7 @@ class RoleConfigExporter < ConfigurationExporter
   end
 
   def role_forms(permitted_form_ids)
-    permitted_form_ids.present? ? forms_with_subforms.select { |k,_| permitted_form_ids.include?(k) } : forms_with_subforms
+    permitted_form_ids.present? ? forms_with_subforms.select { |k, _| permitted_form_ids.include?(k) } : forms_with_subforms
   end
 
   def role_form_ids(permitted_form_ids)
@@ -63,7 +62,7 @@ class RoleConfigExporter < ConfigurationExporter
 
     new_actions = []
     new_actions << 'view_incident_from_case' if actions.include?('read')
-    new_actions << 'incident_from_case'  if (actions & %w[create write]).any?
+    new_actions << 'incident_from_case' if (actions & %w[create write]).any?
     new_actions
   end
 
@@ -73,7 +72,7 @@ class RoleConfigExporter < ConfigurationExporter
     form_ids = role_form_ids(opts[:permitted_form_ids])
     return [] if form_ids.blank? || form_ids.exclude?('basic_identity')
 
-    ['close', 'reopen']
+    %w[close reopen]
   end
 
   def permission_actions_case(actions, opts = {})
@@ -151,7 +150,7 @@ class RoleConfigExporter < ConfigurationExporter
     return [] if forms.blank?
 
     form_ids = forms.values.flatten.map(&:unique_id)
-    field_names = forms.map {|_,v| v.map {|form| form.fields.map { |field| field.name if field.visible? }}}.flatten.compact
+    field_names = forms.map { |_, v| v.map { |form| form.fields.map { |field| field.name if field.visible? } } }.flatten.compact
     new_actions = []
     new_actions << 'dash_case_incident_overview' if form_ids.include?('incident_details_container')
     new_actions += permission_actions_dashboard_task_overdue(field_names) if actions.include?('dash_cases_by_task_overdue')
@@ -168,7 +167,7 @@ class RoleConfigExporter < ConfigurationExporter
   def permission_actions_dashboard_overview(opts = {})
     new_actions = []
     new_actions << 'dash_case_overview' if opts[:group_permission] == 'self'
-    new_actions << 'dash_group_overview' if ['group', 'all'].include?(opts[:group_permission])
+    new_actions << 'dash_group_overview' if %w[group all].include?(opts[:group_permission])
     new_actions
   end
 
@@ -182,7 +181,8 @@ class RoleConfigExporter < ConfigurationExporter
     new_actions << 'dash_shared_with_my_team' if actions.include?('dash_referrals_by_socal_worker')
     new_actions << 'dash_shared_from_my_team' if actions.include?('dash_transfers_by_socal_worker')
     new_actions += permission_actions_dashboard_overview(opts)
-    new_actions += permission_actions_dashboard_shared(view_assessment: actions.include?('view_assessment'), case_permissions: opts[:case_permissions])
+    new_actions += permission_actions_dashboard_shared(view_assessment: actions.include?('view_assessment'),
+                                                       case_permissions: opts[:case_permissions])
     new_actions += permission_actions_dashboard_approval(opts) if actions.include?('view_approvals')
     new_actions += permission_actions_form_dependent(actions, opts)
     new_actions.uniq
@@ -202,7 +202,7 @@ class RoleConfigExporter < ConfigurationExporter
   end
 
   def case_permissions(permissions)
-    permissions.select{|p| p.resource == 'case'}.first&.actions
+    permissions.select { |p| p.resource == 'case' }.first&.actions
   end
 
   def add_incident_from_case?(permissions, permission, opts = {})
@@ -239,9 +239,10 @@ class RoleConfigExporter < ConfigurationExporter
 
   def configuration_hash_role(object)
     config_hash = object.attributes.except('id', 'permissions_list', 'permitted_form_ids').merge(unique_id(object)).with_indifferent_access
-    config_hash['is_manager'] = ['all', 'group'].include?(object.group_permission)
+    config_hash['is_manager'] = %w[all group].include?(object.group_permission)
     config_hash['module_unique_ids'] = role_module(object)
-    config_hash['permissions'] = role_permissions(object.permissions_list, permitted_form_ids: object.permitted_form_ids,
+    config_hash['permissions'] = role_permissions(object.permissions_list,
+                                                  permitted_form_ids: object.permitted_form_ids,
                                                   group_permission: object.group_permission,
                                                   module_unique_ids: config_hash['module_unique_ids'])
     config_hash['form_section_read_write'] = role_permitted_form_hash(object.permitted_form_ids)

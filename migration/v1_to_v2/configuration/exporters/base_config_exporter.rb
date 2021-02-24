@@ -1,12 +1,9 @@
 # frozen_string_literal: true
 
-# Exports the current state of the Primero configuration as v2 compatible Ruby scripts.
-# This was copied from the primero_v2 project: app/models/exporters/ruby_config_exporter.rb.
-# It was modified to be stand-alone script that can be run on a v1.7 or v1.6 system.
 require File.dirname(__FILE__) + '/configuration_exporter.rb'
 
+# Exports the current v1.7 or v1.6 state of the Primero configuration as v2 compatible Ruby scripts.
 class BaseConfigExporter < ConfigurationExporter
-
   private
 
   def approvals_labels
@@ -124,7 +121,7 @@ class BaseConfigExporter < ConfigurationExporter
   end
 
   def config_object_names
-    %w[SystemSettings Agency Lookup Report UserGroup PrimeroModule PrimeroProgram ContactInformation ExportConfiguration]
+    %w[SystemSettings Agency Lookup Report UserGroup PrimeroModule PrimeroProgram ContactInformation
+       ExportConfiguration]
   end
 end
-

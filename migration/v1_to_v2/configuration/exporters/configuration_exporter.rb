@@ -1,11 +1,8 @@
 # frozen_string_literal: true
 
-# Exports the current state of the Primero configuration as v2 compatible Ruby scripts.
-# This was copied from the primero_v2 project: app/models/exporters/ruby_config_exporter.rb.
-# It was modified to be stand-alone script that can be run on a v1.7 or v1.6 system.
-
 require 'fileutils'
 
+# Exports the current v1.7 or v1.6 state of the Primero configuration as v2 compatible Ruby scripts.
 class ConfigurationExporter
   def initialize(export_dir: 'seed-files')
     @export_dir = export_dir
@@ -55,12 +52,13 @@ class ConfigurationExporter
       grouped_forms[k] = v + FormSection.get_subforms(v) unless retired_forms.include?(v.first.unique_id)
     end
     @forms_with_subforms = grouped_forms.map do |unique_id, form_and_subforms|
-                             [unique_id, form_and_subforms.sort_by { |form| form.is_nested? ? 0 : 1 }]
-                           end.to_h
+      [unique_id, form_and_subforms.sort_by { |form| form.is_nested? ? 0 : 1 }]
+    end.to_h
     @forms_with_subforms
   end
 
   def export_config_objects(config_name, objects)
+    puts "Exporting #{config_name.pluralize}"
     file_name = file_for(config_name: config_name, config_objects: objects)
     File.open(file_name, 'a') do |f|
       objects.each do |config_object|
@@ -74,7 +72,7 @@ class ConfigurationExporter
     _i
     ruby_string += "#{i}#{value_to_ruby_string(config_hash)}"
     i_
-    ruby_string += "\n#{i})\n\n"
+    ruby_string + "\n#{i})\n\n"
   end
 
   def array_value_to_ruby_string(value)
@@ -132,7 +130,6 @@ class ConfigurationExporter
     }
   end
 
-
   def config_objects(config_name)
     Object.const_get(config_name).all.map { |object| send("configuration_hash_#{config_name.underscore}", object) }
   end
@@ -142,9 +139,7 @@ class ConfigurationExporter
     @system_settings
   end
 
-
   def config_object_names
     []
   end
 end
-
