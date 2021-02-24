@@ -26,6 +26,7 @@ class LocationConfigExporter
   end
 
   def export
+    puts "Exporting Locations"
     FileUtils.mkdir_p(@config_dir)
     File.open(File.expand_path(@config_file), 'a+') do |file|
       begin

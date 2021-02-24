@@ -233,7 +233,7 @@ class RoleConfigExporter < ConfigurationExporter
       opts[:case_permissions] = case_permissions(permissions)
       json_hash['dashboard'] = default_dashboard_permissions(opts)
     end
-    json_hash['objects'] = object_hash
+    json_hash['objects'] = object_hash if object_hash.present?
     json_hash
   end
 
