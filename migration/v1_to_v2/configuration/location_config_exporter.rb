@@ -2,6 +2,8 @@
 
 # Generates a v2.0+ compatible script to create locations.
 class LocationConfigExporter
+  # rubocop:disable Style/StringLiterals
+
   HEADER = [
     "# Automatically generated script to migrate locations from v1.7 to v2.0+\n",
     "Location.destroy_all\n",
@@ -11,11 +13,21 @@ class LocationConfigExporter
   ENDING = [
     "]\n",
     "Location.locations_by_code = locations.map { |l| [l.location_code, l] }.to_h\n",
-    'locations.each do |loc|',
-    '  loc.set_name_from_hierarchy_placenames',
+    "locations.each do |loc|",
+    "  loc.set_name_from_hierarchy_placenames",
     "end\n",
-    "locations.each(&:save!)\n"
+    "locations.each do |loc|",
+    "  puts \"Creating location \#{loc.location_code}\"",
+    "  loc.save!",
+    "rescue ActiveRecord::RecordNotUnique",
+    "  puts \"Skipping. Location \#{loc.location_code} already exists!\"",
+    "rescue StandardError => e",
+    "  puts \"Cannot create \#{loc.location_code}. Error \#{e.message}\"",
+    "  raise e",
+    "end\n"
   ].join("\n").freeze
+
+  # rubocop:enable Style/StringLiterals
 
   def initialize(options = {})
     @export_dir = options[:export_dir] || 'seed-files'
