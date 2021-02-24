@@ -16,7 +16,6 @@ class UsersExporter
     "  user.password = random_password",
     "  user.password_confirmation = random_password",
     "  puts \"Saving user: \#{user.user_name}...\"",
-    "  puts \"with password: \#{random_password}\" if @show_passwords == true",
     "  user.save!\n",
     "  if @send_reset_email",
     "    user.send_reset_password_instructions",
@@ -46,7 +45,6 @@ class UsersExporter
     @send_reset_email = options[:send_reset_email] == 'true' || options[:send_reset_email] == true
     @admin_user_name = options[:admin_user_name]
     @log = options[:log] || fallback_logger
-    @show_passwords = options[:show_passwords]
   end
 
   def export
@@ -93,7 +91,6 @@ class UsersExporter
       "@user_groups = UserGroup.all.reduce({}){ |acc, elem| acc.merge({ elem.unique_id => elem }) }",
       "@roles = Role.all.reduce({}){ |acc, elem| acc.merge({ elem.unique_id => elem }) }",
       "@send_reset_email = #{@send_reset_email}\n",
-      "@show_passwords = #{@show_passwords}",
       "puts 'send_reset_password_instructions will be skipped because send_reset_email is not enabled.' if !@send_reset_email \n\n"
     ].join("\n").freeze
   end
