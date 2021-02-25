@@ -5,7 +5,7 @@ definitions:
     - step: &push-to-github
         name: Push to Github
         script:
-          - git push git@github.com:primeroIMS/primero-v2-migration.git master --tags
+          - git push https://$primeroimstoken@github.com/primeroIMS/primero-v2-migration.git master --tags
 pipelines:
   branches:
     master:
