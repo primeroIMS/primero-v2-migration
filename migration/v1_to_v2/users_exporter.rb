@@ -21,6 +21,8 @@ class UsersExporter
     "    user.send_reset_password_instructions",
     "    user.send_welcome_email(@admin_user) if @admin_user.present? ",
     "  end",
+    "rescue ActiveRecord::RecordNotUnique",
+    "  puts \"Skipping creation of user \#{user.user_name}. User already exists.\"",
     "rescue StandardError => e",
     "  puts \"Error creating user: \#{user.user_name}\"",
     "  puts e",
