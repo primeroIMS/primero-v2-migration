@@ -63,10 +63,10 @@ class SavedSearchesExporter
     batch.each do |saved_search|
       begin
         file.write(stringify_saved_search(saved_search))
-        @log.info("SavedSearch | user_name: #{saved_search.user_name} written successfully")
+        @log.info("SavedSearch for user_name: #{saved_search.user_name} written successfully")
       rescue StandardError => e
         @log.error(e)
-        @log.error("Error when user_name: #{saved_search.user_name} was written")
+        @log.error("SavedSearch for user_name: #{saved_search.user_name} could not be written")
       end
     end
   end
@@ -86,38 +86,48 @@ class SavedSearchesExporter
   end
 
   def convert_filters(filters)
-    filters.map do |filter|
-      filter_value = filter["value"]
-      next(filter.merge(convert_hash_value(filter_value))) if filter_value.is_a?(Hash)
-
-      value = convert_array_value(filter_value)
-      filter.merge("value" => value)
-    end
+    filters.map { |filter| convert_filter(filter) }
   end
 
-  def convert_array_value(filter_value)
-    case filter_value.first
-    when "list" then [filter_value.last]
-    when "range" then [filter_value.last.split("-").map(&:strip).join("..")]
-    when "date_range"
-      dates = filter_value.last.split(".").map do |date|
-        DateTime.parse(date).utc.strftime('%Y-%m-%dT%H:%M:%SZ')
-      end
+  def convert_filter(filter)
+    return filter.merge(convert_hash_filter(filter)) if filter['value'].is_a?(Hash)
+    return filter.merge("name" => "flagged", "value" => ["true"]) if filter["name"] == "flag"
+    return filter.merge(convert_date_range_filter(filter)) if filter['value'].first == "date_range"
 
-      [dates.join("..")]
-    when "location" then [filter_value.last]
-    when "single" then ["true"]
+    filter.merge("value" => convert_array_value(filter))
+  end
+
+  def convert_array_value(filter)
+    filter_value = filter['value']
+
+    case filter_value.first
+    when 'list' then [filter_value.last]
+    when 'range' then [filter_value.last.split("-").map(&:strip).join("..")]
+    when 'location' then [filter_value.last]
+    when 'single' then ["true"]
     else
       filter_value
     end
   end
 
-  def convert_hash_value(filter_value)
+  def convert_hash_filter(filter)
+    filter_value = filter['value']
+
     if filter_value.values.flatten.first == "or_op"
       { 'name' => 'or', 'value' => { filter_value.keys.first => filter_value.values.flatten.last } }
     else
-      filter_value
+      filter
     end
+  end
+
+  def convert_date_range_filter(filter)
+    dates = filter['value'].last.split('.').map { |date| DateTime.parse(date).utc }
+    from = dates.first.strftime('%Y-%m-%dT%H:%M:%SZ')
+    to = dates.last.end_of_day.strftime('%Y-%m-%dT%H:%M:%SZ')
+
+    return { 'value' => "#{from}..#{to}" } if filter['name'] == 'last_updated_at'
+
+    { 'value' => { 'from' => from, 'to' => to } }
   end
 
   # rubocop:enable Style/StringLiterals, Style/RedundantBegin
