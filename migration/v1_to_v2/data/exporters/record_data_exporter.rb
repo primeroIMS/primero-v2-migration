@@ -14,12 +14,12 @@ class RecordDataExporter
     'records.each do |record|',
     "  puts \"Creating record \#{record.id}\"",
     '  record.save!',
-    "rescue ActiveRecord::RecordNotUnique",
+    'rescue ActiveRecord::RecordNotUnique',
     "  puts \"Skipping. Record \#{record.id} already exists!\"",
-    "rescue StandardError => e",
+    'rescue StandardError => e',
     "  puts \"Cannot create \#{record.id}. Error \#{e.message}\"",
-    "  raise e",
-    "end\n",
+    '  raise e',
+    "end\n"
   ].join("\n").freeze
 
   def initialize(export_dir: 'record-data-files', batch_size: 500)
@@ -49,39 +49,31 @@ class RecordDataExporter
     @indent -= 1
   end
 
-
   def model_class(record_type)
     record_type == 'Case' ? 'Child' : record_type
   end
 
-  def file_for(record_type, i)
+  def file_for(record_type, index)
     config_dir = "#{@export_dir}/#{record_type.pluralize.underscore}"
     FileUtils.mkdir_p(config_dir)
-    "#{config_dir}/#{record_type.underscore}#{i}.rb"
+    "#{config_dir}/#{record_type.underscore}#{index}.rb"
   end
 
-  def header
-    #TODO
-  end
-
-  def ending
-    #TODO
-  end
-
-  def export_record_objects(record_type, objects, i)
+  def export_record_objects(record_type, objects, index)
     return if objects.blank?
 
-    File.open(file_for(record_type, i), 'a') do |file|
+    File.open(file_for(record_type, index), 'a') do |file|
       file.write(HEADER)
-      objects.each { |object| write_object(file, object, record_type) }
+      objects.each { |object| file.write(config_to_ruby_string(object, record_type)) }
+      # objects.each { |object| write_object(file, object, record_type) }
       file.write(ENDING)
     end
   end
 
-  def write_object(file, object, record_type)
-    # TODO: Is this necessary?  Do I need to wrap this in a rescue block?
-    file.write(config_to_ruby_string(object, record_type))
-  end
+  # def write_object(file, object, record_type)
+  #   # TODO: Is this necessary?  Do I need to wrap this in a rescue block?
+  #   file.write(config_to_ruby_string(object, record_type))
+  # end
 
   def config_to_ruby_string(object_hash, record_type)
     ruby_string = "#{i}#{model_class(record_type)}.new(\n"
@@ -139,7 +131,6 @@ class RecordDataExporter
   def key_to_ruby(key)
     key.is_a?(Integer) || key.include?('-') ? "'#{key}'" : key
   end
-
 
   def migrate_notes(notes)
     notes.each do |note|
@@ -215,10 +206,10 @@ class RecordDataExporter
 
   def export_records(record_type)
     puts "Exporting #{record_type.pluralize}"
-    i = 0
+    index = 0
     Object.const_get(model_class(record_type)).each_slice(@batch_size) do |objects|
-      export_record_objects(record_type, record_objects(record_type, objects), i)
-      i += 1
+      export_record_objects(record_type, record_objects(record_type, objects), index)
+      index += 1
     end
   end
 end
