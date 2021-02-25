@@ -65,15 +65,9 @@ class RecordDataExporter
     File.open(file_for(record_type, index), 'a') do |file|
       file.write(HEADER)
       objects.each { |object| file.write(config_to_ruby_string(object, record_type)) }
-      # objects.each { |object| write_object(file, object, record_type) }
       file.write(ENDING)
     end
   end
-
-  # def write_object(file, object, record_type)
-  #   # TODO: Is this necessary?  Do I need to wrap this in a rescue block?
-  #   file.write(config_to_ruby_string(object, record_type))
-  # end
 
   def config_to_ruby_string(object_hash, record_type)
     ruby_string = "#{i}#{model_class(record_type)}.new(\n"
