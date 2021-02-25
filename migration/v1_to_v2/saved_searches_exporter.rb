@@ -85,16 +85,18 @@ class SavedSearchesExporter
     ].join("\n")
   end
 
+  # rubocop:enable Style/StringLiterals, Style/RedundantBegin
+
   def convert_filters(filters)
     filters.map { |filter| convert_filter(filter) }
   end
 
   def convert_filter(filter)
     return filter.merge(convert_hash_filter(filter)) if filter['value'].is_a?(Hash)
-    return filter.merge("name" => "flagged", "value" => ["true"]) if filter["name"] == "flag"
-    return filter.merge(convert_date_range_filter(filter)) if filter['value'].first == "date_range"
+    return filter.merge('name' => 'flagged', 'value' => ['true']) if filter['name'] == 'flag'
+    return filter.merge(convert_date_range_filter(filter)) if filter['value'].first == 'date_range'
 
-    filter.merge("value" => convert_array_value(filter))
+    filter.merge('value' => convert_array_value(filter))
   end
 
   def convert_array_value(filter)
@@ -102,9 +104,9 @@ class SavedSearchesExporter
 
     case filter_value.first
     when 'list' then [filter_value.last]
-    when 'range' then [filter_value.last.split("-").map(&:strip).join("..")]
+    when 'range' then [filter_value.last.split('-').map(&:strip).join('..')]
     when 'location' then [filter_value.last]
-    when 'single' then ["true"]
+    when 'single' then ['true']
     else
       filter_value
     end
@@ -113,7 +115,7 @@ class SavedSearchesExporter
   def convert_hash_filter(filter)
     filter_value = filter['value']
 
-    if filter_value.values.flatten.first == "or_op"
+    if filter_value.values.flatten.first == 'or_op'
       { 'name' => 'or', 'value' => { filter_value.keys.first => filter_value.values.flatten.last } }
     else
       filter
@@ -129,6 +131,4 @@ class SavedSearchesExporter
 
     { 'value' => { 'from' => from, 'to' => to } }
   end
-
-  # rubocop:enable Style/StringLiterals, Style/RedundantBegin
 end
