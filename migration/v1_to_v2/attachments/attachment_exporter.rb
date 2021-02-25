@@ -22,7 +22,7 @@ class AttachmentExporter
     'photo_keys' => 'current_photo_key',
     'bia_documents' => 'upload_bia_document',
     'bid_documents' => 'upload_bid_document',
-    'other_documents' => 'upload_other_document'
+    'other_documents' => 'other_documents'
   }.freeze
 
   def initialize(options = {})
@@ -49,9 +49,12 @@ class AttachmentExporter
   end
 
   private
+  def uuid_format(old_id)
+    [old_id[0..7], old_id[8..11], old_id[12..15], old_id[16..19], old_id[20..31]].join('-')
+  end
 
   def set_record_id(type, record_id)
-    @record_id = record_id
+    @record_id = uuid_format(record_id)
     @json_to_export[type][@record_id] = {}
   end
 
@@ -149,7 +152,7 @@ class AttachmentExporter
 
   def write_script_for_attachment(form_name, files)
     files.each do |data|
-      @output.puts "puts 'Inserting \"#{get_attachment_type(data[:path])}\" to #{data[:record_id]})'"
+      @output.puts "puts 'Inserting \"#{get_attachment_type(data[:path])}\" to #{data[:record_id]}'"
       @output.puts "attachement = Attachment.new(#{data.except(:path, :field_name, :date)})"
       add_date_to_file_for_attachment(data[:date])
       @output.puts "attachement.record_type = #{data[:record_type]}"
