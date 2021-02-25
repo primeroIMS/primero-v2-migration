@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require File.dirname(__FILE__) + '/configuration_exporter.rb'
+require_relative('configuration_exporter.rb')
 
 # Exports the current v1 state of the Primero forms configuration as v2 compatible Ruby scripts.
 class FormConfigExporter < ConfigurationExporter
