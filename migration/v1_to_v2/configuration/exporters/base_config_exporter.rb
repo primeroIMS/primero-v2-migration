@@ -61,10 +61,6 @@ class BaseConfigExporter < ConfigurationExporter
     object.attributes.except('id', 'base_language', 'core_resource').merge(unique_id(object)).with_indifferent_access
   end
 
-  def configuration_hash_lookup(object)
-    object.attributes.except('id', 'base_language', 'editable').merge(unique_id(object)).with_indifferent_access
-  end
-
   def configuration_hash_report(object)
     config_hash = object.attributes.except('id', 'module_ids', 'exclude_empty_rows', 'base_language',
                                            'primero_version').with_indifferent_access
@@ -121,7 +117,7 @@ class BaseConfigExporter < ConfigurationExporter
   end
 
   def config_object_names
-    %w[SystemSettings Agency Lookup Report UserGroup PrimeroModule PrimeroProgram ContactInformation
+    %w[SystemSettings Agency Report UserGroup PrimeroModule PrimeroProgram ContactInformation
        ExportConfiguration]
   end
 end
