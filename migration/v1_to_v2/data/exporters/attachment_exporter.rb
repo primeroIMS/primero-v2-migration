@@ -43,12 +43,13 @@ class AttachmentExporter
 
       FileUtils.mkdir_p(folder_to_save)
 
-      puts "Importing #{@record_type.count} #{type.pluralize}"
+      puts "Exporting #{@record_type.count} #{type.pluralize}"
       export_records(forms, type, folder_to_save)
     end
   end
 
   private
+
   def uuid_format(old_id)
     [old_id[0..7], old_id[8..11], old_id[12..15], old_id[16..19], old_id[20..31]].join('-')
   end
@@ -68,7 +69,7 @@ class AttachmentExporter
         set_record_id(type, record._id)
         export_forms_attachments(forms, record, folder_to_save, type)
       end
-      build_file(@record_type.to_s, sufix += 1)
+      build_file(folder_to_save, type, sufix += 1)
     end
   end
 
@@ -78,8 +79,8 @@ class AttachmentExporter
 
       next if files.empty?
 
+      puts "Exporting #{form} from #{type} - #{@record_id}"
       build_data_to_attach(files, folder_to_save, type, form)
-
       export_file(files, folder_to_save, record, form)
     end
   end
@@ -135,9 +136,11 @@ class AttachmentExporter
     'document'
   end
 
-  def initialize_script_for_attachment(type, sufix)
-    @output = File.new("#{@export_dir}/#{type}.#{sufix}.rb", 'w')
+  def initialize_script_for_attachment(folder_to_save, type, sufix)
+    script_name = "#{type.pluralize}.#{sufix}.rb"
+    @output = File.new("#{folder_to_save}/#{script_name}", 'w')
     @output.puts("# Automatically generated script to migrate attachment from v1.7 to v2.0+\n\n")
+    puts "Generating #{script_name} for #{type} - #{@record_id}"
   end
 
   def add_attachment_type_to_file_for_attachment(path)
@@ -163,8 +166,8 @@ class AttachmentExporter
     end
   end
 
-  def build_file(type, sufix)
-    initialize_script_for_attachment(type, sufix)
+  def build_file(folder_to_save, type, sufix)
+    initialize_script_for_attachment(folder_to_save, type, sufix)
     RECORD_TYPES.keys.each do |key|
       next if @json_to_export[key].blank?
 
