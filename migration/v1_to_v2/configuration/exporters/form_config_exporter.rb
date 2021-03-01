@@ -22,6 +22,46 @@ class FormConfigExporter < ConfigurationExporter
     "#{config_dir}/#{opts[:config_objects].last['unique_id']}.rb"
   end
 
+  def default_service_referral_fields
+    [
+      {'name' => 'service_external_referral',
+       'type' => 'tick_box',
+       'tick_box_label_en' => 'Yes',
+       'visible' => false,
+       'display_name_en' => 'Is this a referral to an external system / user?',
+      },
+      {
+        'name' => 'service_external_referral_header',
+        'type' => 'separator',
+        'visible' => false,
+        'display_name_en' => 'External referral details'
+      },
+      {
+        'name' => 'service_provider',
+        'type' => 'text_field',
+        'visible' => false,
+        'display_name_en' => 'Service Provider'
+      },
+      {
+        'name' => 'service_implementing_agency_external',
+        'type' => 'text_field',
+        'visible' => false,
+        'display_name_en' => 'Implementing Agency'
+      },
+      {
+        'name' => 'service_location',
+        'type' => 'text_field',
+        'visible' => false,
+        'display_name_en' => 'Service Location'
+      }
+    ]
+  end
+
+  def service_referral_fields(field_attributes)
+    field_names = field_attributes.map { |f| f['name'] }
+    default_service_referral_fields.select { |field| field_names.exclude?(field['name']) }
+  end
+
   def configuration_hash_form_section(object)
     config_hash = object.attributes.except('id', 'fields', 'base_language', 'collapsed_fields', 'fixed_order',
                                            'perm_visible', 'perm_enabled', 'validations')
@@ -29,6 +69,7 @@ class FormConfigExporter < ConfigurationExporter
     config_hash['fields_attributes'] = object.fields.map do |field|
       configuration_hash_field(field, object.unique_id)
     end
+    config_hash['fields_attributes'] += service_referral_fields(config_hash['fields_attributes']) if config_hash['unique_id'] == 'services_section'
     config_hash
   end
 
