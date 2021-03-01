@@ -4,6 +4,11 @@ require_relative('configuration_exporter.rb')
 
 # Exports the current v1 state of the Primero roles configuration as v2 compatible Ruby scripts.
 class RoleConfigExporter < ConfigurationExporter
+  def initialize(export_dir: 'seed-files')
+    super
+    @module_hash = PrimeroModule.all.map {|m| [m.id, m]}.to_h
+  end
+
   private
 
   def config_to_ruby_string(config_name, config_hash)
@@ -19,7 +24,7 @@ class RoleConfigExporter < ConfigurationExporter
   end
 
   def modules_for_superuser
-    PrimeroModule.all.map(&:id)
+    @module_hash.keys
   end
 
   def role_module(object)
@@ -171,6 +176,12 @@ class RoleConfigExporter < ConfigurationExporter
     new_actions
   end
 
+  def permission_workflow?(opts)
+    return false unless opts[:group_permission] == 'self'
+
+    opts[:module_unique_ids].any? { |module_id| @module_hash[module_id]&.use_workflow_service_implemented }
+  end
+
   def permission_actions_dashboard(actions, opts = {})
     return [] if actions.blank?
 
@@ -178,6 +189,7 @@ class RoleConfigExporter < ConfigurationExporter
                                dash_manager_transfers dash_referrals_by_socal_worker dash_transfers_by_socal_worker]
     new_actions << 'case_risk' if actions.include?('view_assessment')
     new_actions << 'workflow_team' if actions.include?('dash_cases_by_workflow')
+    new_actions << 'workflow' if permission_workflow?(opts)
     new_actions << 'dash_shared_with_my_team' if actions.include?('dash_referrals_by_socal_worker')
     new_actions << 'dash_shared_from_my_team' if actions.include?('dash_transfers_by_socal_worker')
     new_actions += permission_actions_dashboard_overview(opts)
