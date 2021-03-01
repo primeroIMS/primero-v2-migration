@@ -22,9 +22,9 @@ class BaseConfigExporter < ConfigurationExporter
   end
 
   def convert_field_map(field_map)
-    field_map['fields'].each do |field_hash|
-      field_hash['source'] = field_hash['source']&.last
-    end
+    field_map['fields'] = field_map['fields'].map do |f|
+      {'source' => f['source'].last, 'target' => f['target']} if f['source'].first != 'incident_details'
+    end.compact
     field_map
   end
 
