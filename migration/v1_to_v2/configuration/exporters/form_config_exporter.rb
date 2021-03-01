@@ -25,8 +25,9 @@ class FormConfigExporter < ConfigurationExporter
   def configuration_hash_form_section(object)
     config_hash = object.attributes.except('id', 'fields', 'base_language', 'collapsed_fields', 'fixed_order',
                                            'perm_visible', 'perm_enabled', 'validations')
+    config_hash['collapsed_field_names'] = object.collapsed_fields
     config_hash['fields_attributes'] = object.fields.map do |field|
-      configuration_hash_field(field, object.collapsed_fields, object.unique_id)
+      configuration_hash_field(field, object.unique_id)
     end
     config_hash
   end
@@ -45,10 +46,9 @@ class FormConfigExporter < ConfigurationExporter
     config_hash
   end
 
-  def configuration_hash_field(field, collapsed_fields, form_unique_id)
+  def configuration_hash_field(field, form_unique_id)
     config_hash = field.attributes.except('id', 'highlight_information', 'base_language', 'deletable', 'searchable_select',
                                           'create_property', 'subform_section_id').with_indifferent_access
-    config_hash['collapsed_field_for_subform_unique_id'] = form_unique_id if collapsed_fields.include?(field.name)
     config_hash['subform_unique_id'] = field.subform_section_id if field.type == 'subform'
     config_hash['disabled'] = false if field.type.include?('upload_box')
     config_hash['option_strings_source'] = field.option_strings_source.split(' ').first if field.option_strings_source&.include?('use_api')
