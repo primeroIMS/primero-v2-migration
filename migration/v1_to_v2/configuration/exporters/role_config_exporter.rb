@@ -157,7 +157,7 @@ class RoleConfigExporter < ConfigurationExporter
     form_ids = forms.values.flatten.map(&:unique_id)
     field_names = forms.map { |_, v| v.map { |form| form.fields.map { |field| field.name if field.visible? } } }.flatten.compact
     new_actions = []
-    new_actions << 'dash_case_incident_overview' if form_ids.include?('incident_details_container')
+    new_actions << 'dash_case_incident_overview' if form_ids.include?('incident_details_container') && opts[:group_permission] == 'self'
     new_actions += permission_actions_dashboard_task_overdue(field_names) if actions.include?('dash_cases_by_task_overdue')
     new_actions
   end
