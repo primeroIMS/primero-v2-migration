@@ -55,11 +55,8 @@ class RoleConfigExporter < ConfigurationExporter
   end
 
   def incident_from_case?(actions, opts = {})
-    form_ids = role_form_ids(opts[:permitted_form_ids])
-    return false if form_ids.blank?
-
-    (opts[:module_unique_ids].include?('primeromodule-cp') && form_ids.include?('incident_details_container')) ||
-      (opts[:module_unique_ids].include?('primeromodule-gbv') && actions.include?('write') && form_ids.include?('action_plan_form'))
+    (opts[:module_unique_ids].include?('primeromodule-cp') && opts[:role_form_ids].include?('incident_details_container')) ||
+      (opts[:module_unique_ids].include?('primeromodule-gbv') && actions.include?('write') && opts[:role_form_ids].include?('action_plan_form'))
   end
 
   def permission_actions_incident_from_case(actions, opts = {})
@@ -74,10 +71,17 @@ class RoleConfigExporter < ConfigurationExporter
   def permission_actions_case_close_reopen(actions, opts = {})
     return [] unless actions.include?('write')
 
-    form_ids = role_form_ids(opts[:permitted_form_ids])
-    return [] if form_ids.blank? || form_ids.exclude?('basic_identity')
+    opts[:role_form_ids].include?('basic_identity') ? %w[close reopen] : []
+  end
 
-    %w[close reopen]
+  def permission_actions_case_form_dependent(actions, opts = {})
+    return [] if opts[:role_form_ids].blank?
+
+    new_actions = []
+    new_actions << 'view_photo' if opts[:role_form_ids].include?('photos_and_audio')
+    new_actions += permission_actions_case_close_reopen(actions, opts)
+    new_actions += permission_actions_incident_from_case(actions, opts)
+    new_actions
   end
 
   def permission_actions_case(actions, opts = {})
@@ -89,8 +93,7 @@ class RoleConfigExporter < ConfigurationExporter
     new_actions << 'approve_assessment' if actions.include?('approve_bia')
     new_actions << 'enable_disable' if actions.include?('write')
     new_actions << 'change_log' if opts[:permitted_form_ids].blank?
-    new_actions += permission_actions_incident_from_case(actions, opts)
-    new_actions += permission_actions_case_close_reopen(actions, opts)
+    new_actions += permission_actions_case_form_dependent(actions, opts)
     new_actions.uniq
   end
 
@@ -150,7 +153,7 @@ class RoleConfigExporter < ConfigurationExporter
     new_actions
   end
 
-  def permission_actions_form_dependent(actions, opts = {})
+  def permission_actions_dashboard_form_dependent(actions, opts = {})
     forms = role_forms(opts[:permitted_form_ids])
     return [] if forms.blank?
 
@@ -176,7 +179,15 @@ class RoleConfigExporter < ConfigurationExporter
     new_actions
   end
 
-  def permission_workflow?(opts)
+  def permission_actions_dashboard_group_all(opts = {})
+    return [] unless opts[:group_permission] == 'all'
+
+    %w[dash_reporting_location dash_protection_concerns]
+  end
+
+  def permission_workflow?(actions, opts = {})
+    return true if actions.include?('view_response')
+
     return false unless opts[:group_permission] == 'self'
 
     opts[:module_unique_ids].any? { |module_id| @module_hash[module_id]&.use_workflow_service_implemented }
@@ -186,23 +197,27 @@ class RoleConfigExporter < ConfigurationExporter
     return [] if actions.blank?
 
     new_actions = actions - %w[view_approvals view_assessment dash_cases_by_workflow dash_cases_by_task_overdue
-                               dash_manager_transfers dash_referrals_by_socal_worker dash_transfers_by_socal_worker]
+                               dash_manager_transfers dash_referrals_by_socal_worker dash_transfers_by_socal_worker
+                               view_response manage]
     new_actions << 'case_risk' if actions.include?('view_assessment')
     new_actions << 'workflow_team' if actions.include?('dash_cases_by_workflow')
-    new_actions << 'workflow' if permission_workflow?(opts)
+    new_actions << 'workflow' if permission_workflow?(actions, opts)
     new_actions << 'dash_shared_with_my_team' if actions.include?('dash_referrals_by_socal_worker')
     new_actions << 'dash_shared_from_my_team' if actions.include?('dash_transfers_by_socal_worker')
+    new_actions << 'dash_flags' if opts[:case_permissions].present?
     new_actions += permission_actions_dashboard_overview(opts)
     new_actions += permission_actions_dashboard_shared(view_assessment: actions.include?('view_assessment'),
                                                        case_permissions: opts[:case_permissions])
+    new_actions += permission_actions_dashboard_group_all(opts)
     new_actions += permission_actions_dashboard_approval(opts) if actions.include?('view_approvals')
-    new_actions += permission_actions_form_dependent(actions, opts)
+    new_actions += permission_actions_dashboard_form_dependent(actions, opts)
     new_actions.uniq
   end
 
   def default_dashboard_permissions(opts = {})
     new_actions = permission_actions_dashboard_overview(opts)
     new_actions += permission_actions_dashboard_shared(view_assessment: false, case_permissions: opts[:case_permissions])
+    new_actions += permission_actions_dashboard_group_all(opts)
     new_actions
   end
 
@@ -220,8 +235,7 @@ class RoleConfigExporter < ConfigurationExporter
   def add_incident_from_case?(permissions, permission, opts = {})
     return false unless permission.resource == 'case' && permissions.map(&:resource).exclude?('incident')
 
-    form_ids = role_form_ids(opts[:permitted_form_ids])
-    form_ids&.include?('incident_details_container') ? true : false
+    opts[:role_form_ids]&.include?('incident_details_container') ? true : false
   end
 
   def incident_permissions_from_case(case_permission)
@@ -233,6 +247,7 @@ class RoleConfigExporter < ConfigurationExporter
 
   def role_permissions(permissions, opts = {})
     object_hash = {}
+    opts[:role_form_ids] = role_form_ids(opts[:permitted_form_ids])
     json_hash = permissions.inject({}) do |hash, permission|
       opts[:case_permissions] = case_permissions(permissions) if permission.resource == 'dashboard'
       hash[permission.resource] = permission_actions(permission, opts)
