@@ -161,9 +161,7 @@ class RoleConfigExporter < ConfigurationExporter
     new_actions
   end
 
-  def dash_case_incident_overview?(form_ids, opts = {})
-    form_ids.include?('incident_details_container') && opts[:group_permission] == 'self'
-  end
+
 
   def permission_actions_dashboard_form_dependent(actions, opts = {})
     forms = role_forms(opts[:permitted_form_ids])
@@ -174,7 +172,7 @@ class RoleConfigExporter < ConfigurationExporter
       v.map { |form| form.fields.map { |field| field.name if field.visible? } }
     end.flatten.compact
     new_actions = []
-    new_actions << 'dash_case_incident_overview' if dash_case_incident_overview?(form_ids, opts)
+    new_actions += permission_actions_dashboard_overview(form_ids, opts)
     new_actions += permission_actions_dashboard_task_overdue(actions, field_names)
     new_actions
   end
@@ -186,11 +184,12 @@ class RoleConfigExporter < ConfigurationExporter
     new_actions
   end
 
-  def permission_actions_dashboard_overview(opts = {})
-    new_actions = []
-    new_actions << 'case_overview' if opts[:group_permission] == 'self'
-    new_actions << 'dash_group_overview' if %w[group all].include?(opts[:group_permission])
-    new_actions
+  def permission_actions_dashboard_overview(form_ids, opts = {})
+    return %w[dash_group_overview] if %w[group all].include?(opts[:group_permission])
+
+    return [] unless opts[:group_permission] == 'self'
+
+    form_ids.include?('incident_details_container') ? %w[dash_case_incident_overview] : %w[case_overview]
   end
 
   def permission_actions_dashboard_group_all(opts = {})
@@ -199,8 +198,8 @@ class RoleConfigExporter < ConfigurationExporter
     %w[dash_reporting_location dash_protection_concerns]
   end
 
-  def permission_workflow?(actions, opts = {})
-    return true if actions.include?('view_response')
+  def permission_workflow?(opts = {})
+    return true if opts[:view_response]
 
     return false unless opts[:group_permission] == 'self'
 
@@ -215,11 +214,10 @@ class RoleConfigExporter < ConfigurationExporter
                                view_response manage]
     new_actions << 'case_risk' if actions.include?('view_assessment')
     new_actions << 'workflow_team' if actions.include?('dash_cases_by_workflow')
-    new_actions << 'workflow' if permission_workflow?(actions, opts)
+    new_actions << 'workflow' if permission_workflow?(opts.merge(view_response: actions.include?('view_response')))
     new_actions << 'dash_shared_with_my_team' if actions.include?('dash_referrals_by_socal_worker')
     new_actions << 'dash_shared_from_my_team' if actions.include?('dash_transfers_by_socal_worker')
     new_actions << 'dash_flags' if opts[:case_permissions].present?
-    new_actions += permission_actions_dashboard_overview(opts)
     new_actions += permission_actions_dashboard_shared(view_assessment: actions.include?('view_assessment'),
                                                        case_permissions: opts[:case_permissions])
     new_actions += permission_actions_dashboard_group_all(opts)
@@ -229,10 +227,11 @@ class RoleConfigExporter < ConfigurationExporter
   end
 
   def default_dashboard_permissions(opts = {})
-    new_actions = permission_actions_dashboard_overview(opts)
+    new_actions = permission_actions_dashboard_overview([], opts)
     new_actions += permission_actions_dashboard_shared(view_assessment: false,
                                                        case_permissions: opts[:case_permissions])
     new_actions += permission_actions_dashboard_group_all(opts)
+    new_actions << 'workflow' if permission_workflow?(opts.merge(view_response: false))
     new_actions
   end
 
@@ -289,6 +288,7 @@ class RoleConfigExporter < ConfigurationExporter
     config_hash['is_manager'] = %w[all group].include?(object.group_permission)
     config_hash['module_unique_ids'] = role_module(object)
     config_hash['permissions'] = role_permissions(object.permissions_list,
+                                                  id: object.id,
                                                   permitted_form_ids: object.permitted_form_ids,
                                                   group_permission: object.group_permission,
                                                   module_unique_ids: config_hash['module_unique_ids'])

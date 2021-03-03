@@ -8,7 +8,7 @@ class BaseConfigExporter < ConfigurationExporter
 
   def approvals_labels
     {
-      assessment: 'SER',
+      assessment: 'BIA',
       case_plan: 'Case Plan',
       closure: 'Closure',
       action_plan: 'Action Plan',
