@@ -6,11 +6,11 @@ require_relative('configuration_exporter.rb')
 class BaseConfigExporter < ConfigurationExporter
   private
 
-  def approvals_labels
+  def approvals_labels(locale)
     {
-      assessment: 'BIA',
-      case_plan: 'Case Plan',
-      closure: 'Closure',
+      assessment: I18n.t("approvals.bia", locale: locale),
+      case_plan: I18n.t("approvals.case_plan", locale: locale),
+      closure: I18n.t("approvals.closure", locale: locale),
       action_plan: 'Action Plan',
       gbv_closure: 'GBV Closure'
     }
@@ -100,7 +100,7 @@ class BaseConfigExporter < ConfigurationExporter
                                            'show_provider_note_field', 'set_service_implemented_on',
                                            'reporting_location_config').with_indifferent_access
     config_hash['reporting_location_config'] = convert_reporting_location_config(object.reporting_location_config)
-    config_hash['approvals_labels_en'] = approvals_labels
+    I18n.available_locales.each { |locale| config_hash["approvals_labels_#{locale}"] = approvals_labels(locale) }
     config_hash
   end
 
