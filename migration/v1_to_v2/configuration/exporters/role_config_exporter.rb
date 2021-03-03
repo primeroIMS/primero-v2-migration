@@ -6,17 +6,18 @@ require_relative('configuration_exporter.rb')
 class RoleConfigExporter < ConfigurationExporter
   def initialize(export_dir: 'seed-files')
     super
-    @module_hash = PrimeroModule.all.map {|m| [m.id, m]}.to_h
+    @module_hash = PrimeroModule.all.map { |m| [m.id, m] }.to_h
   end
 
   private
 
   def config_to_ruby_string(config_name, config_hash)
     ruby_string = super
+    return ruby_string unless config_hash['form_section_read_write'].nil?
+
     # The nil is necessary to distinguish between roles that have no form restrictions vs roles that have form
     # restrictions, but all of their allowed forms are retired.
-    ruby_string += role_form_ruby_string(config_hash['unique_id']) + "\n\n" if config_hash['form_section_read_write'].nil?
-    ruby_string
+    ruby_string + role_form_ruby_string(config_hash['unique_id']) + "\n\n"
   end
 
   def role_form_ruby_string(role_id)
@@ -44,7 +45,9 @@ class RoleConfigExporter < ConfigurationExporter
   end
 
   def role_forms(permitted_form_ids)
-    permitted_form_ids.present? ? forms_with_subforms.select { |k, _| permitted_form_ids.include?(k) } : forms_with_subforms
+    return forms_with_subforms.select { |k, _| permitted_form_ids.include?(k) } if permitted_form_ids.present?
+
+    forms_with_subforms
   end
 
   def role_form_ids(permitted_form_ids)
@@ -55,8 +58,11 @@ class RoleConfigExporter < ConfigurationExporter
   end
 
   def incident_from_case?(actions, opts = {})
-    (opts[:module_unique_ids].include?('primeromodule-cp') && opts[:role_form_ids].include?('incident_details_container')) ||
-      (opts[:module_unique_ids].include?('primeromodule-gbv') && actions.include?('write') && opts[:role_form_ids].include?('action_plan_form'))
+    (opts[:module_unique_ids].include?('primeromodule-cp') &&
+      opts[:role_form_ids].include?('incident_details_container')) ||
+    (opts[:module_unique_ids].include?('primeromodule-gbv') &&
+      actions.include?('write') &&
+      opts[:role_form_ids].include?('action_plan_form'))
   end
 
   def permission_actions_incident_from_case(actions, opts = {})
@@ -144,7 +150,9 @@ class RoleConfigExporter < ConfigurationExporter
       (system_settings.due_date_from_appointment_date && field_names.include?('service_appointment_date'))
   end
 
-  def permission_actions_dashboard_task_overdue(field_names)
+  def permission_actions_dashboard_task_overdue(actions, field_names)
+    return [] unless actions.include?('dash_cases_by_task_overdue')
+
     new_actions = []
     new_actions << 'cases_by_task_overdue_assessment' if field_names.include?('assessment_requested_on')
     new_actions << 'cases_by_task_overdue_case_plan' if field_names.include?('case_plan_due_date')
@@ -153,15 +161,21 @@ class RoleConfigExporter < ConfigurationExporter
     new_actions
   end
 
+  def dash_case_incident_overview?(form_ids, opts = {})
+    form_ids.include?('incident_details_container') && opts[:group_permission] == 'self'
+  end
+
   def permission_actions_dashboard_form_dependent(actions, opts = {})
     forms = role_forms(opts[:permitted_form_ids])
     return [] if forms.blank?
 
     form_ids = forms.values.flatten.map(&:unique_id)
-    field_names = forms.map { |_, v| v.map { |form| form.fields.map { |field| field.name if field.visible? } } }.flatten.compact
+    field_names = forms.map do |_, v|
+      v.map { |form| form.fields.map { |field| field.name if field.visible? } }
+    end.flatten.compact
     new_actions = []
-    new_actions << 'dash_case_incident_overview' if form_ids.include?('incident_details_container') && opts[:group_permission] == 'self'
-    new_actions += permission_actions_dashboard_task_overdue(field_names) if actions.include?('dash_cases_by_task_overdue')
+    new_actions << 'dash_case_incident_overview' if dash_case_incident_overview?(form_ids, opts)
+    new_actions += permission_actions_dashboard_task_overdue(actions, field_names)
     new_actions
   end
 
@@ -216,7 +230,8 @@ class RoleConfigExporter < ConfigurationExporter
 
   def default_dashboard_permissions(opts = {})
     new_actions = permission_actions_dashboard_overview(opts)
-    new_actions += permission_actions_dashboard_shared(view_assessment: false, case_permissions: opts[:case_permissions])
+    new_actions += permission_actions_dashboard_shared(view_assessment: false,
+                                                       case_permissions: opts[:case_permissions])
     new_actions += permission_actions_dashboard_group_all(opts)
     new_actions
   end
@@ -251,7 +266,9 @@ class RoleConfigExporter < ConfigurationExporter
     json_hash = permissions.inject({}) do |hash, permission|
       opts[:case_permissions] = case_permissions(permissions) if permission.resource == 'dashboard'
       hash[permission.resource] = permission_actions(permission, opts)
-      hash['incident'] = incident_permissions_from_case(permission) if add_incident_from_case?(permissions, permission, opts)
+      if add_incident_from_case?(permissions, permission, opts)
+        hash['incident'] = incident_permissions_from_case(permission)
+      end
       object_hash[Permission::AGENCY] = permission.agency_ids if permission.agency_ids.present?
       object_hash[Permission::ROLE] = permission.role_ids if permission.role_ids.present?
       hash
@@ -265,7 +282,10 @@ class RoleConfigExporter < ConfigurationExporter
   end
 
   def configuration_hash_role(object)
-    config_hash = object.attributes.except('id', 'permissions_list', 'permitted_form_ids').merge(unique_id(object)).with_indifferent_access
+    config_hash = object.attributes
+                        .except('id', 'permissions_list', 'permitted_form_ids')
+                        .merge(unique_id(object))
+                        .with_indifferent_access
     config_hash['is_manager'] = %w[all group].include?(object.group_permission)
     config_hash['module_unique_ids'] = role_module(object)
     config_hash['permissions'] = role_permissions(object.permissions_list,

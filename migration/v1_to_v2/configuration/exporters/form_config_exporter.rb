@@ -24,11 +24,12 @@ class FormConfigExporter < ConfigurationExporter
 
   def default_service_referral_fields
     [
-      {'name' => 'service_external_referral',
-       'type' => 'tick_box',
-       'tick_box_label_en' => 'Yes',
-       'visible' => false,
-       'display_name_en' => 'Is this a referral to an external system / user?',
+      {
+        'name' => 'service_external_referral',
+        'type' => 'tick_box',
+        'tick_box_label_en' => 'Yes',
+        'visible' => false,
+        'display_name_en' => 'Is this a referral to an external system / user?'
       },
       {
         'name' => 'service_external_referral_header',
@@ -69,7 +70,9 @@ class FormConfigExporter < ConfigurationExporter
     config_hash['fields_attributes'] = object.fields.map do |field|
       configuration_hash_field(field, object.unique_id)
     end
-    config_hash['fields_attributes'] += service_referral_fields(config_hash['fields_attributes']) if config_hash['unique_id'] == 'services_section'
+    return config_hash unless config_hash['unique_id'] == 'services_section'
+
+    config_hash['fields_attributes'] += service_referral_fields(config_hash['fields_attributes'])
     config_hash
   end
 
@@ -88,8 +91,9 @@ class FormConfigExporter < ConfigurationExporter
   end
 
   def configuration_hash_field(field, form_unique_id)
-    config_hash = field.attributes.except('id', 'highlight_information', 'base_language', 'deletable', 'searchable_select',
-                                          'create_property', 'subform_section_id').with_indifferent_access
+    config_hash = field.attributes.except('id', 'highlight_information', 'base_language', 'deletable',
+                                          'searchable_select', 'create_property',
+                                          'subform_section_id').with_indifferent_access
     config_hash['subform_unique_id'] = field.subform_section_id if field.type == 'subform'
     config_hash['disabled'] = false if field.type.include?('upload_box')
     config_hash['option_strings_source'] = field.option_strings_source.split(' ').first if field.option_strings_source&.include?('use_api')

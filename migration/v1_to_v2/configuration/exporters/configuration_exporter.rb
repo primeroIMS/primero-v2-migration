@@ -70,7 +70,8 @@ class ConfigurationExporter
   end
 
   def config_to_ruby_string(config_name, config_hash)
-    ruby_string = config_hash['unique_id'].present? ? "#{i}#{config_name}.create_or_update!(\n" : "#{i}#{config_name}.create!(\n"
+    create_string = config_hash['unique_id'].present? ? "create_or_update" : "create"
+    ruby_string = "#{i}#{config_name}.#{create_string}!(\n"
     _i
     ruby_string += "#{i}#{value_to_ruby_string(config_hash)}"
     i_

@@ -23,7 +23,7 @@ class BaseConfigExporter < ConfigurationExporter
 
   def convert_field_map(field_map)
     field_map['fields'] = field_map['fields'].map do |f|
-      {'source' => f['source'].last, 'target' => f['target']} if f['source'].first != 'incident_details'
+      { 'source' => f['source'].last, 'target' => f['target'] } if f['source'].first != 'incident_details'
     end.compact
     field_map
   end
@@ -35,7 +35,7 @@ class BaseConfigExporter < ConfigurationExporter
   end
 
   def form_section_ruby_string(form_ids)
-    "FormSection.where(unique_id: %w#{form_ids})".gsub(/\"/, '').gsub(/,/, '')
+    "FormSection.where(unique_id: %w#{form_ids})".delete('\"').delete(',')
   end
 
   def primero_program_ruby_string(program_id)

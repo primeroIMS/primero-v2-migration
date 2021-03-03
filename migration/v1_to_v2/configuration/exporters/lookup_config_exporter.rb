@@ -5,6 +5,7 @@ require_relative('configuration_exporter.rb')
 # Exports the current v1 state of the Primero roles configuration as v2 compatible Ruby scripts.
 class LookupConfigExporter < ConfigurationExporter
   private
+
   def lookup_pdf_header
     {
       'unique_id' => 'lookup-pdf-header',
