@@ -151,7 +151,7 @@ class RoleConfigExporter < ConfigurationExporter
   end
 
   def permission_actions_dashboard_task_overdue(actions, field_names)
-    return [] unless actions.include?('dash_cases_by_task_overdue')
+    return [] if field_names.blank? || actions.exclude?('dash_cases_by_task_overdue')
 
     new_actions = []
     new_actions << 'cases_by_task_overdue_assessment' if field_names.include?('assessment_requested_on')
@@ -161,16 +161,12 @@ class RoleConfigExporter < ConfigurationExporter
     new_actions
   end
 
-
-
   def permission_actions_dashboard_form_dependent(actions, opts = {})
     forms = role_forms(opts[:permitted_form_ids])
-    return [] if forms.blank?
-
-    form_ids = forms.values.flatten.map(&:unique_id)
-    field_names = forms.map do |_, v|
+    form_ids = forms&.values&.flatten&.map(&:unique_id)
+    field_names = forms&.map do |_, v|
       v.map { |form| form.fields.map { |field| field.name if field.visible? } }
-    end.flatten.compact
+    end&.flatten&.compact
     new_actions = []
     new_actions += permission_actions_dashboard_overview(form_ids, opts)
     new_actions += permission_actions_dashboard_task_overdue(actions, field_names)
