@@ -152,7 +152,17 @@ class DataExporter
   end
 
   def uuid_format(old_id)
+    return nil if old_id.blank?
+
     [old_id[0..7], old_id[8..11], old_id[12..15], old_id[16..19], old_id[20..31]].join('-')
+  end
+
+  def data_hash_incident(data_hash)
+    keys = data_hash.keys
+    data_hash['short_id'] = data_hash.delete('cp_short_id') if keys.include?('cp_short_id')
+
+    # These are stored in separate tables in v2.  They will be migrated in other scripts
+    data_hash
   end
 
   def object_data_hash(object_name, object)

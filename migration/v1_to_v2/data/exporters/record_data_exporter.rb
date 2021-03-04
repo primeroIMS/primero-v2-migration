@@ -27,14 +27,6 @@ class RecordDataExporter < DataExporter
     data_hash.except('other_documents', 'incident_details', 'transitions', 'flags', 'approval_subforms')
   end
 
-  def data_hash_incident(data_hash)
-    keys = data_hash.keys
-    data_hash['short_id'] = data_hash.delete('cp_short_id') if keys.include?('cp_short_id')
-
-    # These are stored in separate tables in v2.  They will be migrated in other scripts
-    data_hash
-  end
-
   def data_hash_tracing_request(data_hash)
     data_hash['status'] = data_hash.delete('inquiry_status')
     data_hash
