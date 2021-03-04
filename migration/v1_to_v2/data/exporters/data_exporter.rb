@@ -33,10 +33,8 @@ class DataExporter
     record_type == 'Case' ? 'Child' : record_type
   end
 
-  def file_for(record_type, index)
-    config_dir = "#{@export_dir}/#{record_type.pluralize.underscore}"
-    FileUtils.mkdir_p(config_dir)
-    "#{config_dir}/#{record_type.underscore}#{index}.rb"
+  def file_for(object_name, index)
+    # TODO: should this be implemented in sub classes?
   end
 
   def header
