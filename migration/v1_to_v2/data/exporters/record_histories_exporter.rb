@@ -4,12 +4,6 @@ require_relative('data_exporter.rb')
 
 # Generates a v2.0+ compatible script to create flags.
 class RecordHistoriesExporter < DataExporter
-  DATE_FIELDS = %i[date created_at unflagged_date].freeze
-
-  NULLABLE_FIELDS = %i[message removed unflag_message system_generated_followup unflagged_by].freeze
-
-  BOOLEAN_FIELDS = %i[removed system_generated_followup].freeze
-
   # rubocop:disable Style/StringLiterals
 
   HEADER = [
@@ -63,13 +57,14 @@ class RecordHistoriesExporter < DataExporter
     end
   end
 
-  def file_for(object_name, index)
+  def file_for(_, index)
     config_dir = "#{@export_dir}/record_histories"
     FileUtils.mkdir_p(config_dir)
     "#{config_dir}/record_history#{index}.rb"
   end
 
   def export_data_objects(object_name)
+    puts 'Exporting record histories...'
     index = 0
     object_query(object_name).each_slice(@batch_size) do |objects|
       export_object_batch(object_name, objects, index)
@@ -100,13 +95,13 @@ class RecordHistoriesExporter < DataExporter
       "  RecordHistory.new(",
       "    record_id: \"#{uuid_format(object.id)}\",",
       "    record_type: \"#{object.class.name}\",",
-      "    datetime: Date.parse(\"#{history.datetime.strftime('%Y-%m-%dT%H:%M:%SZ')}\"),",
+      "    datetime: DateTime.parse(\"#{history.datetime.strftime('%Y-%m-%dT%H:%M:%SZ')}\"),",
       "    user_name: \"#{history.user_name}\",",
       "    action: \"#{history.action}\",",
-      "    record_changes: #{value_to_ruby_string(history.changes)}",
+      "    record_changes: #{value_to_ruby_string(history.changes, true)}",
       "  ),\n"
     ].join("\n")
   end
-  
+
   # rubocop:enable Style/StringLiterals
 end
