@@ -6,11 +6,11 @@ require_relative('configuration_exporter.rb')
 class BaseConfigExporter < ConfigurationExporter
   private
 
-  def approvals_labels
+  def approvals_labels(locale)
     {
-      assessment: 'SER',
-      case_plan: 'Case Plan',
-      closure: 'Closure',
+      assessment: I18n.t("approvals.bia", locale: locale),
+      case_plan: I18n.t("approvals.case_plan", locale: locale),
+      closure: I18n.t("approvals.closure", locale: locale),
       action_plan: 'Action Plan',
       gbv_closure: 'GBV Closure'
     }
@@ -22,9 +22,9 @@ class BaseConfigExporter < ConfigurationExporter
   end
 
   def convert_field_map(field_map)
-    field_map['fields'].each do |field_hash|
-      field_hash['source'] = field_hash['source']&.last
-    end
+    field_map['fields'] = field_map['fields'].map do |f|
+      { 'source' => f['source'].last, 'target' => f['target'] } if f['source'].first != 'incident_details'
+    end.compact
     field_map
   end
 
@@ -35,7 +35,7 @@ class BaseConfigExporter < ConfigurationExporter
   end
 
   def form_section_ruby_string(form_ids)
-    "FormSection.where(unique_id: %w#{form_ids})".gsub(/\"/, '').gsub(/,/, '')
+    "FormSection.where(unique_id: %w#{form_ids})".delete('\"').delete(',')
   end
 
   def primero_program_ruby_string(program_id)
@@ -59,10 +59,6 @@ class BaseConfigExporter < ConfigurationExporter
   def configuration_hash_agency(object)
     # TODO: handle logo
     object.attributes.except('id', 'base_language', 'core_resource').merge(unique_id(object)).with_indifferent_access
-  end
-
-  def configuration_hash_lookup(object)
-    object.attributes.except('id', 'base_language', 'editable').merge(unique_id(object)).with_indifferent_access
   end
 
   def configuration_hash_report(object)
@@ -104,7 +100,7 @@ class BaseConfigExporter < ConfigurationExporter
                                            'show_provider_note_field', 'set_service_implemented_on',
                                            'reporting_location_config').with_indifferent_access
     config_hash['reporting_location_config'] = convert_reporting_location_config(object.reporting_location_config)
-    config_hash['approvals_labels_en'] = approvals_labels
+    I18n.available_locales.each { |locale| config_hash["approvals_labels_#{locale}"] = approvals_labels(locale) }
     config_hash
   end
 
@@ -121,7 +117,7 @@ class BaseConfigExporter < ConfigurationExporter
   end
 
   def config_object_names
-    %w[SystemSettings Agency Lookup Report UserGroup PrimeroModule PrimeroProgram ContactInformation
+    %w[SystemSettings Agency Report UserGroup PrimeroModule PrimeroProgram ContactInformation
        ExportConfiguration]
   end
 end
