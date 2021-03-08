@@ -1,19 +1,12 @@
 # frozen_string_literal: true
 
-require 'fileutils'
+require_relative('data_exporter.rb')
 
 # rubocop:disable Metrics/ClassLength
 # Class that get record's attachments and generate files to be inserted
-class AttachmentExporter
-  RECORD_TYPES = {
-    'case' => 'Child',
-    'incident' => 'Incident',
-    'tracing_request' => 'TracingRequest'
-  }.freeze
-
+class AttachmentExporter < DataExporter
   ATTACHMENTS_FORMS = {
     'case' => %w[photo_keys bia_documents bid_documents other_documents],
-    'incident' => [],
     'tracing_request' => []
   }.freeze
 
@@ -26,32 +19,34 @@ class AttachmentExporter
   }.freeze
 
   def initialize(options = {})
-    @export_dir = options[:base_folder] || 'record-data-files'
-    @batch_size = options[:batch_size] || 500
+    super(options)
+    @indent = 0
     @json_to_export = {}
-    FileUtils.mkdir_p(@export_dir)
-  end
-
-  def export
-    ATTACHMENTS_FORMS.each do |type, forms|
-      @record_type = RECORD_TYPES[type].constantize
-
-      next if forms.empty? || @record_type.count.zero?
-
-      type_folder = "#{type.pluralize}-attachments"
-      folder_to_save = "#{@export_dir}/#{type_folder}"
-
-      FileUtils.mkdir_p(folder_to_save)
-
-      puts "Exporting #{@record_type.count} #{type.pluralize}"
-      export_records(forms, type, folder_to_save)
-    end
   end
 
   private
 
-  def uuid_format(old_id)
-    [old_id[0..7], old_id[8..11], old_id[12..15], old_id[16..19], old_id[20..31]].join('-')
+  def data_object_names
+    %w[case tracing_request]
+  end
+
+  def export_data_objects(object_name)
+    @record_type = object_query(object_name.camelize)
+    forms = ATTACHMENTS_FORMS[object_name]
+
+    return if forms.empty? || @record_type.count.zero?
+
+    type_folder = "#{object_name.pluralize}-attachments"
+    folder_to_save = "#{@export_dir}/#{type_folder}"
+
+    FileUtils.mkdir_p(folder_to_save)
+
+    puts "Exporting #{@record_type.count} #{object_name.pluralize}"
+    export_records(forms, object_name, folder_to_save)
+  end
+
+  def header
+    "# Automatically generated script to migrate attachment from v1.7 to v2.0+\n"
   end
 
   def set_record_id(type, record_id)
@@ -60,7 +55,6 @@ class AttachmentExporter
   end
 
   def export_records(forms, type, folder_to_save)
-    sufix = 0
     @record_type.each_slice(@batch_size) do |records|
       @json_to_export[type] = {}
       records.each do |record|
@@ -69,7 +63,7 @@ class AttachmentExporter
         set_record_id(type, record._id)
         export_forms_attachments(forms, record, folder_to_save, type)
       end
-      build_file(folder_to_save, type, sufix += 1)
+      build_file(folder_to_save, type, _i)
     end
   end
 
@@ -168,10 +162,10 @@ class AttachmentExporter
 
   def build_file(folder_to_save, type, sufix)
     initialize_script_for_attachment(folder_to_save, type, sufix)
-    RECORD_TYPES.keys.each do |key|
-      next if @json_to_export[key].blank?
+    data_object_names.each do |object_nane|
+      next if @json_to_export[object_nane].blank?
 
-      @json_to_export[key].values.each do |value|
+      @json_to_export[object_nane].values.each do |value|
         value.each do |form_name, files|
           write_script_for_attachment(form_name, files)
         end
