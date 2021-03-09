@@ -133,7 +133,7 @@ class AttachmentExporter < DataExporter
   def initialize_script_for_attachment(folder_to_save, type, sufix)
     script_name = "#{type.pluralize}.#{sufix}.rb"
     @output = File.new("#{folder_to_save}/#{script_name}", 'w')
-    @output.puts("# Automatically generated script to migrate attachment from v1.7 to v2.0+\n\n")
+    @output.puts(header)
     puts "Generating #{script_name} for #{type} - #{@record_id}"
   end
 
