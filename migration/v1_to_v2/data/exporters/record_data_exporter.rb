@@ -6,12 +6,6 @@ require_relative('data_exporter.rb')
 class RecordDataExporter < DataExporter
   private
 
-  def file_for(object_name, index)
-    config_dir = "#{@export_dir}/#{object_name.pluralize.underscore}"
-    FileUtils.mkdir_p(config_dir)
-    "#{config_dir}/#{object_name.underscore}#{index}.rb"
-  end
-
   def migrate_notes(notes)
     notes.each do |note|
       note['note_date'] = note.delete('notes_date')
@@ -31,14 +25,6 @@ class RecordDataExporter < DataExporter
 
     # These are stored in separate tables in v2.  They will be migrated in other scripts
     data_hash.except('other_documents', 'incident_details', 'transitions', 'flags', 'approval_subforms')
-  end
-
-  def data_hash_incident(data_hash)
-    keys = data_hash.keys
-    data_hash['short_id'] = data_hash.delete('cp_short_id') if keys.include?('cp_short_id')
-
-    # These are stored in separate tables in v2.  They will be migrated in other scripts
-    data_hash
   end
 
   def data_hash_tracing_request(data_hash)
