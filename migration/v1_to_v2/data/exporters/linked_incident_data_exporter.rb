@@ -17,16 +17,18 @@ class LinkedIncidentDataExporter < DataExporter
   end
 
   def object_hashes(object_name, objects)
-    objects.map do |child|
+    objects.select { |child| child.incident_details.present? }.map do |child|
+      next unless child.incident_details.is_a?(Array)
+
       child.incident_details.map do |incident_detail|
-        incident = Incident.make_new_incident("primeromodule-cp", child, "primeromodule-cp", incident_detail.unique_id, nil)
+        incident = Incident.make_new_incident(child.module_id, child, child.module_id, incident_detail.unique_id, nil)
         object_data_hash(object_name, incident)
       end
     end.flatten
   end
 
   def object_query(_object_name)
-    Child.all.select { |child| child.incident_details.present? }
+    Child
   end
 
   def data_object_names

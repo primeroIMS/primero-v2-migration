@@ -4,7 +4,7 @@ require 'fileutils'
 
 # Exports v1 Primero record data as v2 compatible JSON files.
 class DataExporter
-  def initialize(export_dir: 'record-data-files', batch_size: 500)
+  def initialize(export_dir: 'record-data-files', batch_size: 250)
     @export_dir = export_dir
     @batch_size = batch_size
     FileUtils.mkdir_p(@export_dir)
