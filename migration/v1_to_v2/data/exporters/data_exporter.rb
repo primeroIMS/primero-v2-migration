@@ -101,7 +101,7 @@ class DataExporter
   # rubocop:disable Metrics/MethodLength
   # rubocop:disable Metrics/AbcSize
   def value_to_ruby_string(value, include_blank = false)
-    return "nil" if include_blank && value.nil?
+    return 'nil' if include_blank && value.nil?
 
     if value.is_a?(Hash)
       ruby_string = "{\n"
