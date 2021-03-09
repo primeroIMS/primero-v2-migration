@@ -6,12 +6,6 @@ require_relative('data_exporter.rb')
 class RecordDataExporter < DataExporter
   private
 
-  def file_for(object_name, index)
-    config_dir = "#{@export_dir}/#{object_name.pluralize.underscore}"
-    FileUtils.mkdir_p(config_dir)
-    "#{config_dir}/#{object_name.underscore}#{index}.rb"
-  end
-
   def migrate_notes(notes)
     notes.each do |note|
       note['note_date'] = note.delete('notes_date')

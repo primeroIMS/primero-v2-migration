@@ -34,7 +34,9 @@ class DataExporter
   end
 
   def file_for(object_name, index)
-    # TODO: should this be implemented in sub classes?
+    config_dir = "#{@export_dir}/#{object_name.pluralize.underscore}"
+    FileUtils.mkdir_p(config_dir)
+    "#{config_dir}/#{object_name.underscore}#{index}.rb"
   end
 
   def header
