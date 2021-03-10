@@ -59,7 +59,7 @@ class RecordHistoriesExporter < DataExporter
       object.histories.map do |history|
         history_hash = history.to_hash.except('unique_id', 'user_organization', 'prev_revision')
         history_hash['datetime'] = datetime_string(history_hash)
-        history_hash['record_changes'] = history_hash.delete('changes')
+        history_hash['record_changes'] = format_changes(history_hash.delete('changes'))
         history_hash['record_id'] = uuid_format(object.id)
         history_hash['record_type'] = object.class.name
         history_hash
@@ -75,5 +75,46 @@ class RecordHistoriesExporter < DataExporter
     return unless object_hash['datetime'].present?
 
     "DateTime.parse(\"#{object_hash['datetime'].strftime('%Y-%m-%dT%H:%M:%SZ')}\")"
+  end
+
+  def format_changes(changes)
+    return if changes.nil?
+    return changes unless changes.is_a?(Hash)
+
+    changes.keys.inject({}) do |acc, elem|
+      change = changes[elem]
+
+      next(acc.merge(elem => change)) if change.key?('to')
+
+      acc.merge(elem => format_subform_change(change))
+    end
+  end
+
+  def format_subform_change(change)
+    subform_ids = change.keys
+
+    subform_ids.each_with_object('to' => nil, 'from' => nil) do |elem, acc|
+      subform_fields = change[elem].keys
+      subform_change = change[elem]
+
+      subform_from = build_subform(subform_change, subform_fields, 'from')
+
+      subform_to = build_subform(subform_change, subform_fields, 'to')
+
+      acc['from'] = change_value(acc['from'], subform_from)
+      acc['to'] = change_value(acc['to'], subform_to)
+
+      acc
+    end
+  end
+
+  def build_subform(subform_change, subform_fields, diff_field)
+    subform_fields.inject({}) { |acc, elem| acc.merge(elem => subform_change[elem][diff_field]) }
+  end
+
+  def change_value(current_diff, subform)
+    return current_diff.push(subform) if current_diff.present?
+
+    subform.compact.present? ? [subform] : nil
   end
 end
