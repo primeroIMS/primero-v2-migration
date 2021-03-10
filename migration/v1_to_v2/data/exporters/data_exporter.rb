@@ -71,8 +71,12 @@ class DataExporter
     end
   end
 
+  def new_string(record_type)
+    "#{model_class(record_type)}.new"
+  end
+
   def config_to_ruby_string(object_hash, record_type)
-    ruby_string = "#{i}#{model_class(record_type)}.new(\n"
+    ruby_string = "#{i}#{new_string(record_type)}(\n"
     _i
     ruby_string += "#{i}#{value_to_ruby_string(object_hash)}"
     i_
