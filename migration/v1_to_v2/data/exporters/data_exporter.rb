@@ -2,7 +2,7 @@
 
 require 'fileutils'
 
-# Exports v1 Primero record data as v2 compatible JSON files.
+# Exports v1 Primero record data as v2 compatible ruby files.
 class DataExporter
   def initialize(export_dir: 'record-data-files', batch_size: 250)
     @export_dir = export_dir

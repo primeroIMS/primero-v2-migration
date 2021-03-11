@@ -8,7 +8,8 @@ class TransitionDataExporter < DataExporter
     'reassign' => 'Assign',
     'referral' => 'Referral',
     'transfer' => 'Transfer'
-  }
+  }.freeze
+
   private
 
   def model_class(record_type)
@@ -18,7 +19,7 @@ class TransitionDataExporter < DataExporter
   end
 
   def new_string(_record_type)
-    "Transition.new"
+    'Transition.new'
   end
 
   def data_hash_transition(object, data_hash)
