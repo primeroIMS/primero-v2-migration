@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-%w[Case Incident TracingRequest].each do |record_type|
+%w[Case Incident TracingRequest IncidentFromCase].each do |record_type|
   record_type = record_type.pluralize
   path = "record-data-files/#{record_type.underscore}"
   next unless Dir.exist?(path)
