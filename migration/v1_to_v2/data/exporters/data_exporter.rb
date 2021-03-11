@@ -79,17 +79,17 @@ class DataExporter
     ruby_string + "),\n"
   end
 
-  def array_value_to_ruby_string(value)
+  def array_value_to_ruby_string(value, include_blank = false)
     return '[]' if value.blank?
 
     ruby_string = ''
     if value.first.is_a?(Range)
-      ruby_string = value.map { |v| value_to_ruby_string(v) }.to_s
+      ruby_string = value.map { |v| value_to_ruby_string(v, include_blank) }.to_s
     else
       ruby_string = '['
       _i
       ruby_string += "\n#{i}"
-      ruby_string += value.map { |v| value_to_ruby_string(v) }.join(",\n#{i}")
+      ruby_string += value.map { |v| value_to_ruby_string(v, include_blank) }.join(",\n#{i}")
       i_
       ruby_string += "\n#{i}"
       ruby_string += ']'
@@ -100,19 +100,21 @@ class DataExporter
   # This is a long, recursive method.
   # rubocop:disable Metrics/MethodLength
   # rubocop:disable Metrics/AbcSize
-  def value_to_ruby_string(value)
+  def value_to_ruby_string(value, include_blank = false)
+    return 'nil' if include_blank && value.nil?
+
     if value.is_a?(Hash)
       ruby_string = "{\n"
       _i
       ruby_string += i
       # TODO: was using .compact instead of .reject but it was throwing away false values.  We want to keep those
-      ruby_string += value.reject { |_, v| v.nil? || v == [] }.map do |k, v|
-        "#{key_to_ruby(k)}: #{value_to_ruby_string(v)}"
+      ruby_string += (include_blank ? value : value.reject { |_, v| v.nil? || v == [] }).map do |k,v|
+        "#{key_to_ruby(k)}: #{value_to_ruby_string(v, include_blank)}"
       end.join(",\n#{i}")
       i_
       ruby_string + "\n#{i}}"
     elsif value.is_a?(Array)
-      array_value_to_ruby_string(value)
+      array_value_to_ruby_string(value, include_blank)
     elsif value.is_a?(Range)
       value
     elsif value.is_a?(String) && value.include?('.parse(')
