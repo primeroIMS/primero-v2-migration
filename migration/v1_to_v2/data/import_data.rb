@@ -1,7 +1,8 @@
 # frozen_string_literal: true
 
 def records_to_import
-  %w[Case Incident TracingRequest IncidentFromCase CaseTransition IncidentTransition TracingRequestTransition]
+  %w[Case Incident TracingRequest IncidentFromCase CaseTransition IncidentTransition TracingRequestTransition
+     Alert Flag Recordhistory].freeze
 end
 
 records_to_import.each do |record_type|
