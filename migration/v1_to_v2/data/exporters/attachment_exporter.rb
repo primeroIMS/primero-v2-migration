@@ -70,7 +70,6 @@ class AttachmentExporter < DataExporter
   def export_forms_attachments(forms, record, folder_to_save, type)
     forms.each do |form|
       files = get_files_to_export(record.send(form), form)
-
       next if files.empty?
 
       puts "Exporting #{form} from #{type} - #{@record_id}"
@@ -83,6 +82,7 @@ class AttachmentExporter < DataExporter
     return [] if files.empty?
 
     return { files.values.last => "#{files.values.last}.#{files.keys.last}" } if form == 'audio_attachments'
+
     return files.reduce({}) { |acc, doc| acc.merge(doc => doc) } if form == 'photo_keys'
 
     files.reduce({}) { |acc, doc| acc.merge(doc.attachment_key => doc) }
@@ -162,10 +162,10 @@ class AttachmentExporter < DataExporter
 
   def build_file(folder_to_save, type, sufix)
     initialize_script_for_attachment(folder_to_save, type, sufix)
-    data_object_names.each do |object_nane|
-      next if @json_to_export[object_nane].blank?
+    data_object_names.each do |object_name|
+      next if @json_to_export[object_name].blank?
 
-      @json_to_export[object_nane].values.each do |value|
+      @json_to_export[object_name].values.each do |value|
         value.each do |form_name, files|
           write_script_for_attachment(form_name, files)
         end
