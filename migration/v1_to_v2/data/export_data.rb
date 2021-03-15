@@ -3,14 +3,15 @@
 # Script to call each of the Data Exporters
 require_relative('exporters/record_data_exporter.rb')
 require_relative('exporters/alerts_exporter.rb')
+require_relative('exporters/attachment_exporter.rb')
 require_relative('exporters/flags_exporter.rb')
 require_relative('exporters/linked_incident_data_exporter.rb')
 require_relative('exporters/record_histories_exporter.rb')
 require_relative('exporters/transition_data_exporter.rb')
 
 def exporters
-  %w[RecordDataExporter AlertsExporter FlagsExporter LinkedIncidentDataExporter RecordHistoriesExporter
-     TransitionDataExporter].freeze
+  %w[RecordDataExporter AlertsExporter AttachmentExporter FlagsExporter LinkedIncidentDataExporter
+     RecordHistoriesExporter TransitionDataExporter].freeze
 end
 
 exporters.each do |exporter|
