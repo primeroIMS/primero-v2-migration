@@ -56,7 +56,6 @@ class DataExporter
       "  puts \"Skipping. #{object_name} \#{record.id} already exists!\"",
       'rescue StandardError => e',
       "  puts \"Cannot create \#{record.id}. Error \#{e.message}\"",
-      '  raise e',
       "end\n"
     ].join("\n").freeze
   end

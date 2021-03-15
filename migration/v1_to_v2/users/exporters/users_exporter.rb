@@ -5,9 +5,7 @@ class UsersExporter
   # rubocop:disable Style/StringLiterals, Style/RedundantBegin
 
   HEADER = [
-    "# Automatically generated script to migrate users from v1.7 to v2.0+\n",
-    "puts 'Delete all users...'\n",
-    "User.destroy_all\n\n"
+    "# Automatically generated script to migrate users from v1.7 to v2.0+\n"
   ].join("\n").freeze
 
   CREATE_METHOD = [
@@ -139,11 +137,12 @@ class UsersExporter
   end
 
   def stringify_user(user)
+    email = user.email.present? ? user.email : "#{user.user_name}@test.com"
     [
       "  User.new(",
       "    user_name: \"#{user.user_name}\",",
       "    full_name: \"#{user.full_name}\",",
-      "    email: \"#{user.email}\",",
+      "    email: \"#{email}\",",
       "    disabled: #{user.disabled},",
       "    agency_id: @agencies[\"#{user.organization}\"]&.id,",
       "    role_id: @roles[\"#{user.roles.first.id}\"]&.id,",
