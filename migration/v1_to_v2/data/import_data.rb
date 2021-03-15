@@ -5,9 +5,11 @@ def records_to_import
      Alert Flag Recordhistory].freeze
 end
 
+puts 'Starting Import Data Script'
+
 records_to_import.each do |record_type|
   record_type = record_type.pluralize
-  path = "record-data-files/#{record_type.underscore}"
+  path = File.dirname(__FILE__) + "/record-data-files/#{record_type.underscore}"
   next unless Dir.exist?(path)
 
   puts ""

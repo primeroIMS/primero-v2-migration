@@ -24,6 +24,7 @@ class TransitionDataExporter < DataExporter
 
   def data_hash_transition(object, data_hash)
     keys = data_hash.keys
+    data_hash.delete('unique_id')
     data_hash['record_id'] = uuid_format(object.id)
     data_hash['record_type'] = object.class.name
     data_hash['type'] = TRANSITION_TYPE_MAPPING[data_hash['type']]
@@ -33,6 +34,7 @@ class TransitionDataExporter < DataExporter
     data_hash['status'] = data_hash.delete('to_user_local_status') if keys.include?('to_user_local_status')
     data_hash['service_record_id'] = data_hash.delete('service_section_unique_id') if keys.include?('service_section_unique_id')
     data_hash['remote'] = data_hash.delete('is_remote') if keys.include?('is_remote')
+    data_hash['rejection_note'] = data_hash.delete('note_on_referral_from_provider') if keys.include?('note_on_referral_from_provider')
     data_hash
   end
 
