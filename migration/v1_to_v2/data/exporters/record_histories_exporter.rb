@@ -84,7 +84,7 @@ class RecordHistoriesExporter < DataExporter
     changes.keys.inject({}) do |acc, elem|
       change = changes[elem]
 
-      next(acc.merge(elem => change)) if change.key?('to')
+      next(acc.merge(elem => change)) if change.key?('to') || change.key?('from')
 
       acc.merge(elem => format_subform_change(change))
     end
@@ -115,6 +115,6 @@ class RecordHistoriesExporter < DataExporter
   def change_value(current_diff, subform)
     return current_diff.push(subform) if current_diff.present?
 
-    subform.compact.present? ? [subform] : nil
+    subform.reject { |_, v| v.nil? }.present? ? [subform] : nil
   end
 end
