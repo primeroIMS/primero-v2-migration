@@ -46,12 +46,15 @@ class DataExporter
     ].join("\n")
   end
 
+  # Sikp validations
+  # Things such as permissions may have changed since these records were created
+  # We still want the record to be migrated
   def ending(object_name)
     [
       "]\n",
       'records.each do |record|',
       "  puts \"Creating #{object_name} \#{record.id}\"",
-      '  record.save!',
+      '  record.save!(validate: false)',
       'rescue ActiveRecord::RecordNotUnique',
       "  puts \"Skipping. #{object_name} \#{record.id} already exists!\"",
       'rescue StandardError => e',
