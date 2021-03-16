@@ -4,7 +4,7 @@ require_relative('configuration_exporter.rb')
 
 # Exports the current v1 state of the Primero roles configuration as v2 compatible Ruby scripts.
 class RoleConfigExporter < ConfigurationExporter
-  def initialize(export_dir: 'seed-files')
+  def initialize(export_dir: 'seed-files', batch_size: 250)
     super
     @module_hash = PrimeroModule.all.map { |m| [m.id, m] }.to_h
   end
