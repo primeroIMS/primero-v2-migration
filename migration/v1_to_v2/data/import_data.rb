@@ -2,7 +2,7 @@
 
 def records_to_import
   %w[Case Incident TracingRequest IncidentFromCase CaseTransition IncidentTransition TracingRequestTransition
-     Alert Flag Recordhistory].freeze
+     CaseAttachment IncidentAttachment TracingRequestAttachment Alert Flag RecordHistory].freeze
 end
 
 puts 'Starting Import Data Script'

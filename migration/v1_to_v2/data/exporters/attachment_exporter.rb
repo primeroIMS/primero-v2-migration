@@ -36,7 +36,7 @@ class AttachmentExporter < DataExporter
 
     return if forms.empty? || @record_type.count.zero?
 
-    type_folder = "#{object_name.pluralize}-attachments"
+    type_folder = "#{object_name.underscore}_attachments"
     folder_to_save = "#{@export_dir}/#{type_folder}"
 
     FileUtils.mkdir_p(folder_to_save)
