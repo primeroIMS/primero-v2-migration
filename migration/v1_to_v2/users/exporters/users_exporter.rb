@@ -9,7 +9,13 @@ class UsersExporter
   ].join("\n").freeze
 
   CREATE_METHOD = [
-    "def create_user(user)",
+    "def create_or_update_user(user_hash)",
+    "  user = User.find_by(user_name: user_hash[:user_name])",
+    "  if user.present?",
+    "    user.assign_attributes(user_hash)",
+    "  else",
+    "    user = User.new(user_hash)",
+    "  end",
     "  random_password = \"\#{SecureRandom.base64(40)}1a\"",
     "  user.password = random_password",
     "  user.password_confirmation = random_password",
@@ -32,7 +38,7 @@ class UsersExporter
   END_ARRAY = "]\n\n"
 
   ENDING = [
-    "@users.each{ |user| create_user(user) }\n"
+    "@users.each{ |user| create_or_update_user(user) }\n"
   ].join("\n").freeze
 
   NULLABLE_USER_FIELD_NAMES = %i[code phone agency_office position location user_group_ids locale].freeze
@@ -113,7 +119,7 @@ class UsersExporter
     [
       "puts 'Creating admin user: #{@admin_user_name}...'",
       "@admin_user = #{stringify_user(admin_user)[0..-3]}",
-      "create_user(@admin_user)",
+      "create_or_update_user(@admin_user)",
       "if @admin_user.persisted?",
       "  @admin_user.reload",
       "else",
@@ -139,7 +145,7 @@ class UsersExporter
   def stringify_user(user)
     email = user.email.present? ? user.email : "#{user.user_name}@test.com"
     [
-      "  User.new(",
+      "  {",
       "    user_name: \"#{user.user_name}\",",
       "    full_name: \"#{user.full_name}\",",
       "    email: \"#{email}\",",
@@ -150,7 +156,7 @@ class UsersExporter
       "    send_mail: #{user.send_mail},",
       "    services: #{user.services},",
       stringify_nullable_fields(user),
-      "  ),\n"
+      "  },\n"
     ].join("\n")
   end
 
