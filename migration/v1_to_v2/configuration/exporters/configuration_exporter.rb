@@ -4,8 +4,9 @@ require 'fileutils'
 
 # Exports the current v1.7 or v1.6 state of the Primero configuration as v2 compatible Ruby scripts.
 class ConfigurationExporter
-  def initialize(export_dir: 'seed-files')
+  def initialize(export_dir: 'seed-files', batch_size: 250)
     @export_dir = export_dir
+    @batch_size = batch_size
     FileUtils.mkdir_p(@export_dir)
     @indent = 0
   end
