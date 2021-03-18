@@ -59,17 +59,17 @@ class AgencyLogoExporter < ConfigurationExporter
   end
 
   def build_logo_file(object)
-    File.open("#{@export_dir}/#{object['logo_key']}", 'wb') do |f|
+    logo_name = "#{object['_id']}-#{object['logo_key']}"
+    File.open("#{@export_dir}/#{logo_name}", 'wb') do |f|
       f.write(object.fetch_attachment(object['logo_key']))
     end
   end
 
   def write_export_file(object)
-    logo_path = "#{@export_dir}/#{object['logo_key']}"
-
+    logo_name = "#{object['_id']}-#{object['logo_key']}"
     @output_file.puts "\nagency = Agency.find_by(unique_id: '#{object['_id']}')"
-    @output_file.puts "logo_full = { io: File.open('#{logo_path}'), filename: '#{object['logo_key']}' }"
-    @output_file.puts "logo_icon = { io: File.open('#{logo_path}'), filename: '#{object['logo_key']}' }"
+    @output_file.puts "logo_full = { io: File.open(\"\#{File.dirname(__FILE__)}/#{logo_name}\"), filename: '#{object['logo_key']}' }"
+    @output_file.puts "logo_icon = { io: File.open(\"\#{File.dirname(__FILE__)}/#{logo_name}\"), filename: '#{object['logo_key']}' }"
     @output_file.puts "puts 'Adding logo to #{object['_id']}'"
     @output_file.puts 'agency.logo_full.attach(logo_full)'
     @output_file.puts 'agency.logo_icon.attach(logo_icon)'
