@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative('configuration_exporter.rb')
+require "mini_magick"
 
 # Class that get agency's logo from v1.7 and generate files to be inserted on v2.x
 class AgencyLogoExporter < ConfigurationExporter
@@ -55,7 +56,7 @@ class AgencyLogoExporter < ConfigurationExporter
   end
 
   def logo_is_png?(object)
-    object['_attachments'][object['logo_key']]['content_type'] == 'image/png'
+    MiniMagick::Image.read(object.fetch_attachment(object['logo_key'])).try(:mime_type) == 'image/png'
   end
 
   def build_logo_file(object)
