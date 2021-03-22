@@ -1,15 +1,14 @@
 # frozen_string_literal: true
 
 def records_to_import
-  %w[Case Incident TracingRequest IncidentFromCase CaseTransition IncidentTransition TracingRequestTransition
-     CaseAttachment IncidentAttachment TracingRequestAttachment Alert Flag RecordHistory].freeze
+  %w[User].freeze
 end
 
-puts 'Starting Import Data Script'
+puts 'Starting Import Users Script'
 
 records_to_import.each do |record_type|
   record_type = record_type.pluralize
-  path = File.dirname(__FILE__) + "/record-data-files/#{record_type.underscore}"
+  path = File.dirname(__FILE__) + "/seed-files/#{record_type.underscore}"
   next unless Dir.exist?(path)
 
   puts ""

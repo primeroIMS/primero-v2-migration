@@ -7,7 +7,8 @@ Exporting the seeds on a v1 system
 Copy script to the v1.7 system
 ------------------------------
 - check out the desired tag/branch of this repo
-- scp the script 'ruby_config_exporter.rb' to the 1.7 system
+- scp the contents of the configuration directory to the target system.
+  Sepcifically, you will need export_configuration.rb and everything under the exporters directory
 
 
 Run the script on the v1.7 system
@@ -15,7 +16,7 @@ Run the script on the v1.7 system
 - ssh to the 1.7 system
 - $ sudo -Hu primero bash
 - $ cd ~/application/
-- $ $ RAILS_ENV=production bundle exec rails r /home/ubuntu/ruby_config_exporter.rb
+- $ $ RAILS_ENV=production bundle exec rails r /home/ubuntu/configuration/export_configuration.rb
 
 (This will generate files in a seed-files directory)
 

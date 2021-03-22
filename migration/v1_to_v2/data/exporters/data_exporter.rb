@@ -2,7 +2,7 @@
 
 require 'fileutils'
 
-# Exports v1 Primero record data as v2 compatible JSON files.
+# Exports v1 Primero record data as v2 compatible ruby files.
 class DataExporter
   def initialize(export_dir: 'record-data-files', batch_size: 250)
     @export_dir = export_dir
@@ -46,17 +46,19 @@ class DataExporter
     ].join("\n")
   end
 
+  # Sikp validations
+  # Things such as permissions may have changed since these records were created
+  # We still want the record to be migrated
   def ending(object_name)
     [
       "]\n",
       'records.each do |record|',
       "  puts \"Creating #{object_name} \#{record.id}\"",
-      '  record.save!',
+      '  record.save!(validate: false)',
       'rescue ActiveRecord::RecordNotUnique',
       "  puts \"Skipping. #{object_name} \#{record.id} already exists!\"",
       'rescue StandardError => e',
       "  puts \"Cannot create \#{record.id}. Error \#{e.message}\"",
-      '  raise e',
       "end\n"
     ].join("\n").freeze
   end
@@ -71,8 +73,12 @@ class DataExporter
     end
   end
 
+  def new_string(record_type)
+    "#{model_class(record_type)}.new"
+  end
+
   def config_to_ruby_string(object_hash, record_type)
-    ruby_string = "#{i}#{model_class(record_type)}.new(\n"
+    ruby_string = "#{i}#{new_string(record_type)}(\n"
     _i
     ruby_string += "#{i}#{value_to_ruby_string(object_hash)}"
     i_

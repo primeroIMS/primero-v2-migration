@@ -143,11 +143,12 @@ class UsersExporter
   end
 
   def stringify_user(user)
+    email = user.email.present? ? user.email : "#{user.user_name}@test.com"
     [
       "  {",
       "    user_name: \"#{user.user_name}\",",
       "    full_name: \"#{user.full_name}\",",
-      "    email: \"#{user.email}\",",
+      "    email: \"#{email}\",",
       "    disabled: #{user.disabled},",
       "    agency_id: @agencies[\"#{user.organization}\"]&.id,",
       "    role_id: @roles[\"#{user.roles.first.id}\"]&.id,",

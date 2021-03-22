@@ -36,7 +36,7 @@ class AttachmentExporter < DataExporter
 
     return if forms.empty? || @record_type.count.zero?
 
-    type_folder = "#{object_name.pluralize}-attachments"
+    type_folder = "#{object_name.underscore}_attachments"
     folder_to_save = "#{@export_dir}/#{type_folder}"
 
     FileUtils.mkdir_p(folder_to_save)
@@ -97,7 +97,7 @@ class AttachmentExporter < DataExporter
         record_type: @record_type.to_s, record_id: @record_id, field_name: form,
         file_name: name, date: value.try(:date), comments: value.try(:comments),
         is_current: value.try(:is_current) || false, description: value.try(:document_description),
-        path: "#{folder}/#{@record_id}/#{form}/#{name}"
+        path: "/#{@record_id}/#{form}/#{name}"
       }
     end
   end
@@ -119,7 +119,8 @@ class AttachmentExporter < DataExporter
   end
 
   def mime_type(path)
-    `file --brief --mime-type #{path}`.strip
+    p2 = File.dirname(__FILE__) + path
+    `file --brief --mime-type #{p2}`.strip
   end
 
   def get_attachment_type(path)
@@ -155,8 +156,12 @@ class AttachmentExporter < DataExporter
       @output.puts "attachement.record_type = #{data[:record_type]}"
       add_attachment_type_to_file_for_attachment(data[:path])
       @output.puts "attachement.field_name = '#{get_field_name(form_name)}'"
-      @output.puts "attachement.file.attach(io: File.open('#{data[:path]}'), filename: '#{data[:file_name]}')"
-      @output.puts "attachement.save!\n\n\n"
+      @output.puts "attachement.file.attach(io: File.open(\"\#{File.dirname(__FILE__)}#{data[:path]}\"), filename: '#{data[:file_name]}')"
+      @output.puts "begin"
+      @output.puts "  attachement.save!"
+      @output.puts "rescue StandardError => e"
+      @output.puts "  puts \"Cannot attach #{data[:file_name]}. Error \#{e.message}\""
+      @output.puts "end\n\n\n"
     end
   end
 
