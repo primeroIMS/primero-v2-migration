@@ -170,12 +170,13 @@ class DataExporter
     data_hash['short_id'] = data_hash.delete('cp_short_id') if keys.include?('cp_short_id')
 
     # These are stored in separate tables in v2.  They will be migrated in other scripts
-    data_hash
+    data_hash.except('incident_case_id')
   end
 
   def object_data_hash(object_name, object)
     data_hash = {}
     data_hash['id'] = uuid_format(object.id)
+    data_hash['incident_case_id'] = uuid_format(object&.incident_case_id) if object&.incident_case_id.present?
     data_hash['data'] = send("data_hash_#{object_name.underscore}", parse_object(object))
     data_hash
   end
