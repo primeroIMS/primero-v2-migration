@@ -68,7 +68,11 @@ class DataExporter
 
     File.open(file_for(object_name, index), 'a') do |file|
       file.write(header)
-      objects.each { |object| file.write(config_to_ruby_string(object, object_name)) }
+      objects.each do |object|
+        next if object.blank?
+
+        file.write(config_to_ruby_string(object, object_name))
+      end
       file.write(ending(object_name))
     end
   end
