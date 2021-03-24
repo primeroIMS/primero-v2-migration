@@ -12,7 +12,7 @@ class AttachmentExporter < DataExporter
 
   FIELD_MAPPING = {
     'audio_attachments' => 'recorded_audio',
-    'photo_keys' => 'current_photo_key',
+    'photo_keys' => 'photos',
     'bia_documents' => 'upload_bia_document',
     'bid_documents' => 'upload_bid_document',
     'other_documents' => 'other_documents'
