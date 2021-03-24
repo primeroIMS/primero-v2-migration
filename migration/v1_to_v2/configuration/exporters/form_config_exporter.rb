@@ -87,6 +87,7 @@ class FormConfigExporter < ConfigurationExporter
     config_hash['name'] = config_hash['name'].gsub(/bia/, 'assessment') if config_hash['name'].include?('bia_approved')
     config_hash['name'] = 'approval_status_assessment' if config_hash['name'] == 'approval_status_bia'
     config_hash['name'] = 'short_id' if config_hash['name'] == 'cp_short_id'
+    config_hash['name'] == 'photos' if config_hash['name'] == 'current_photo_key'
     config_hash
   end
 

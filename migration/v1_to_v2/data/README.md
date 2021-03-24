@@ -44,18 +44,26 @@ Untar the tar file on the v2 server
 $ tar -xzvf record-data-files.tar.gz
 
 
-Copy the import script to the v2 system
------------------------------------------------------------------------
+Copy the import script to the v2 server
+-----------------------------------------
 - If you haven't already, check out the desired tag/branch of this repo
 - scp the import_data.rb script to the target system.
 - the record-data-files directory should be at the same level as the import_data.rb script
   Ex:   /home/ubuntu/import_data.rb
         /home/ubuntu/record-data-files/*
 
+ON THE v2 SERVER
+----------------------
 
-Run the script on the v2 system
----------------------------------
-- ssh to the v2 system
-- $ sudo -Hu primero bash
-- $ cd ~/application/
-- $ RAILS_ENV=production rails r /home/ubuntu/import_data.rb
+Copy the scripts to the application docker container
+------------------------------------------------------
+- $ docker ps   (to get the name of the application image)
+- $ docker cp record-data-files primero_application_1:/srv/primero/application/tmp/.  (where primero_application_1 is the image name)
+- $ docker cp import_data.rb primero_application_1:/srv/primero/application/tmp/.
+
+
+Run the script in the docker container
+---------------------------------------
+- $ sudo docker exec -it primero_application_1 bash  (to access the docker container)
+- $ cd /srv/primero/application
+- $ rails r ./tmp/import_data.rb > import_data.out
