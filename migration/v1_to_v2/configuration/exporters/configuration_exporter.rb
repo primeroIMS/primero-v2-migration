@@ -44,6 +44,34 @@ class ConfigurationExporter
        transitions reopened_logs]
   end
 
+  def renamed_fields
+    {
+      'notes_date' => 'note_date',
+      'field_notes_subform_fields' => 'note_text',
+      'upload_other_document' => 'other_documents',
+      'child_status' => 'status',
+      'inquiry_status' => 'status',
+      'unhcr_export_opt_out' => 'unhcr_export_opt_in',
+      'approval_status_bia' => 'approval_status_assessment',
+      'cp_short_id' => 'short_id',
+      'current_photo_key' => 'photos',
+      'cp_incident_date' => 'incident_date',
+      'cp_incident_location' => 'incident_location',
+      'cp_incident_sexual_violence_type' => 'cp_incident_violence_type',
+      'gbv_sexual_violence_type' => 'cp_incident_violence_type'
+    }.freeze
+  end
+
+  def replace_renamed_field_names(field_names)
+    return field_names unless field_names.is_a?(Array)
+
+    new_field_names = field_names - renamed_fields.keys
+    renamed_fields.each do |key, value|
+      new_field_names << value if field_names.include?(key)
+    end
+    new_field_names
+  end
+
   def forms_with_subforms
     return @forms_with_subforms if @forms_with_subforms.present?
 

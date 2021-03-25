@@ -66,6 +66,8 @@ class BaseConfigExporter < ConfigurationExporter
                                            'primero_version').with_indifferent_access
     config_hash['module_id'] = object.module_ids.first
     config_hash['unique_id'] = generate_report_id(object.name_en)
+    config_hash['aggregate_by'] = replace_renamed_field_names(object.aggregate_by) if object.aggregate_by.present?
+    config_hash['disaggregate_by'] = replace_renamed_field_names(object.disaggregate_by) if object.disaggregate_by.present?
     config_hash
   end
 
