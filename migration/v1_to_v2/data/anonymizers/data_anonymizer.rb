@@ -4,14 +4,10 @@
 class DataAnonymizer
   # record_field_map is expected to contain implementation specific fields that need to be anonymized
   def initialize(record_types: %w[Case Incident TracingRequest],
-                 record_field_map: {
-                   case_fields: {},
-                   incident_fields: {},
-                   tracing_request_fields: {}
-                 },
+                 field_map_file: nil,
                  batch_size: 250)
     @record_types = record_types
-    @record_field_map = record_field_map
+    @record_field_map = record_field_map(field_map_file)
     @batch_size = batch_size
   end
 
@@ -20,6 +16,14 @@ class DataAnonymizer
   end
 
   private
+
+  def record_field_map(field_map_file)
+    return {} if field_map_file.blank?
+
+    return {} unless File.exist?(field_map_file)
+
+    File.open(field_map_file) { |file| JSON.parse(file.read) }
+  end
 
   def model_class(record_type)
     record_type == 'Case' ? 'Child' : record_type
@@ -78,7 +82,8 @@ class DataAnonymizer
       'telephone_agency' => 'phone',
       'owned_by_phone' => 'phone',
       'telephone_caregiver' => 'phone',
-      'telephone_caregiver_future' => 'phone'
+      'telephone_caregiver_future' => 'phone',
+      'national_id_no' => 'id'
     }
   end
 
@@ -104,15 +109,21 @@ class DataAnonymizer
   end
 
   def field_map_case
-    @field_map_case ||= default_field_map_case.merge(@record_field_map[:case_fields])
+    return default_field_map_case if @record_field_map['case_fields'].blank?
+
+    default_field_map_case.merge(@record_field_map['case_fields'])
   end
 
   def field_map_incident
-    @field_map_incident ||= default_field_map_incident.merge(@record_field_map[:incident_fields])
+    return default_field_map_incident if @record_field_map['incident_fields'].blank?
+
+    default_field_map_incident.merge(@record_field_map['incident_fields'])
   end
 
   def field_map_tracing_request
-    @field_map_tracing_request ||= default_field_map_tracing_request.merge(@record_field_map[:tracing_request_fields])
+    return default_field_map_tracing_request if @record_field_map['tracing_request_fields'].blank?
+
+    default_field_map_tracing_request.merge(@record_field_map['tracing_request_fields'])
   end
 
   def field_map(record_type)
@@ -159,6 +170,8 @@ class DataAnonymizer
         value = anonymize_address
       when 'phone'
         value = "555-#{[*100..999].sample}-#{[*1000..9999].sample}"
+      when 'id'
+        value = "test-#{[*'aaa'...'zzz'].sample}-#{[*10000..99999].sample}"
       when 'subform'
         anonymize_subform(field_map, record, k, v)
       else
@@ -189,7 +202,7 @@ class DataAnonymizer
     end
     return if records_to_save.blank?
 
-    puts "Updating #{records_to_save.count} records"
+    puts "Updating #{records_to_save.count} #{record_type} records"
     Object.const_get(model_class(record_type)).save_all!(records_to_save)
   end
 
