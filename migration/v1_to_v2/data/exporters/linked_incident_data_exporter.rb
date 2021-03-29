@@ -12,13 +12,16 @@ class LinkedIncidentDataExporter < DataExporter
 
   def data_hash_incident_from_case(data_hash)
     data_hash = data_hash_incident(data_hash)
-    data_hash['incident_case_id'] = uuid_format(data_hash['incident_case_id'])
     data_hash.except('incident_detail_id')
   end
 
   def object_hashes(object_name, objects)
+    incident_case_ids = Incident.all.map(&:incident_case_id).compact
     objects.select { |child| child.incident_details.present? }.map do |child|
       next unless child.incident_details.is_a?(Array)
+
+      # Do not create a new incident if a linked incident already exists
+      next if incident_case_ids.include?(child.id)
 
       child.incident_details.map do |incident_detail|
         incident = Incident.make_new_incident(child.module_id, child, child.module_id, incident_detail.unique_id, nil)
