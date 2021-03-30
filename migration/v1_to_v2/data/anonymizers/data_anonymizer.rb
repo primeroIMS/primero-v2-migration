@@ -83,7 +83,19 @@ class DataAnonymizer
       'owned_by_phone' => 'phone',
       'telephone_caregiver' => 'phone',
       'telephone_caregiver_future' => 'phone',
-      'national_id_no' => 'id'
+      'national_id_no' => 'id',
+      'family_details_section||relation_name' => 'name',
+      'family_details_section||relation_identifiers' => 'id',
+      'family_details_section||relation_nickname' => 'first_name',
+      'family_details_section||relation_address_current' => 'address',
+      'family_details_section||relation_address_last' => 'address',
+      'family_details_section||relation_telephone' => 'phone',
+      'childs_intended_address' => 'address',
+      'interviewer_name' => 'name',
+      'interviewer_email' => 'email',
+      'interviewer_telephone' => 'phone',
+      'address_interview' => 'address',
+      'partner_details' => 'name'
     }
   end
 
@@ -172,6 +184,8 @@ class DataAnonymizer
         value = "555-#{[*100..999].sample}-#{[*1000..9999].sample}"
       when 'id'
         value = "test-#{[*'aaa'...'zzz'].sample}-#{[*10000..99999].sample}"
+      when 'email'
+        value = "test#{[*1000..9999].sample}@test.com"
       when 'subform'
         anonymize_subform(field_map, record, k, v)
       else
