@@ -121,7 +121,7 @@ class AttachmentExporter < DataExporter
   def mime_type(path)
     puts "Test 1..."
     p2 = @folder_to_save + path
-    puts "Test 2..."
+    puts "Test 2... path = #{p2}"
     `file --brief --mime-type #{p2}`.strip
   end
 
