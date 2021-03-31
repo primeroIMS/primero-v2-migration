@@ -119,16 +119,12 @@ class AttachmentExporter < DataExporter
   end
 
   def mime_type(path)
-    puts "Test 1..."
-    p2 = @folder_to_save + path
-    puts "Test 2... path = #{p2}"
+    p2 = @folder_to_save + path.gsub(/ /, '\ ')
     `file --brief --mime-type #{p2}`.strip
   end
 
   def get_attachment_type(path)
-    puts "Test 0..."
     mime = mime_type(path)
-    puts "Test 3..."
     return 'audio' if mime.start_with?('audio')
     return 'image' if mime.start_with?('image')
 
@@ -143,7 +139,6 @@ class AttachmentExporter < DataExporter
   end
 
   def add_attachment_type_to_file_for_attachment(path)
-    puts "Test 000..."
     @output.puts "attachement.attachment_type = '#{get_attachment_type(path)}'"
   end
 
@@ -155,7 +150,6 @@ class AttachmentExporter < DataExporter
 
   def write_script_for_attachment(form_name, files)
     files.each do |data|
-      puts "Test 111..."
       @output.puts "puts 'Inserting \"#{get_attachment_type(data[:path])}\" to #{data[:record_id]}'"
       @output.puts "attachement = Attachment.new(#{data.except(:path, :field_name, :date)})"
       add_date_to_file_for_attachment(data[:date])
