@@ -119,7 +119,7 @@ class AttachmentExporter < DataExporter
   end
 
   def mime_type(path)
-    p2 = @folder_to_save + path
+    p2 = @folder_to_save + path.gsub(/ /, '\ ')
     `file --brief --mime-type #{p2}`.strip
   end
 
