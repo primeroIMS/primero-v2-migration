@@ -37,12 +37,12 @@ class AttachmentExporter < DataExporter
     return if forms.empty? || @record_type.count.zero?
 
     type_folder = "#{object_name.underscore}_attachments"
-    folder_to_save = "#{@export_dir}/#{type_folder}"
+    @folder_to_save = "#{@export_dir}/#{type_folder}"
 
-    FileUtils.mkdir_p(folder_to_save)
+    FileUtils.mkdir_p(@folder_to_save)
 
     puts "Exporting #{@record_type.count} #{object_name.pluralize}"
-    export_records(forms, object_name, folder_to_save)
+    export_records(forms, object_name, @folder_to_save)
   end
 
   def header
@@ -119,7 +119,7 @@ class AttachmentExporter < DataExporter
   end
 
   def mime_type(path)
-    p2 = File.dirname(__FILE__) + path
+    p2 = @folder_to_save + path
     `file --brief --mime-type #{p2}`.strip
   end
 
