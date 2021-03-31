@@ -24,7 +24,8 @@ class RecordDataExporter < DataExporter
     data_hash['status'] = data_hash.delete('child_status')
 
     # These are stored in separate tables in v2.  They will be migrated in other scripts
-    data_hash.except('other_documents', 'incident_details', 'transitions', 'flags', 'approval_subforms')
+    data_hash.except('other_documents', 'photo_keys', 'current_photo_key', 'document_keys', 'audio_attachments',
+                     'recorded_audio', 'incident_details', 'transitions', 'flags', 'approval_subforms')
   end
 
   def data_hash_tracing_request(data_hash)
