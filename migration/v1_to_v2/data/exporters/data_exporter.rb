@@ -137,7 +137,7 @@ class DataExporter
   # rubocop:enable Metrics/AbcSize
 
   def key_to_ruby(key)
-    key.is_a?(Integer) || key.include?('-') ? "'#{key}'" : key
+    key.is_a?(Integer) || key.include?('-') || key.include?(' ') ? "'#{key}'" : key
   end
 
   def flag_date_fields(object, data_hash)
