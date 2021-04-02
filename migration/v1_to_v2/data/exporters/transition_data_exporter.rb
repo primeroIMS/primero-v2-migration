@@ -42,7 +42,7 @@ class TransitionDataExporter < DataExporter
     objects.select { |object| object.transitions.present? }.map do |object|
       next unless object.transitions.is_a?(Array)
 
-      object.transitions.map { |transition| data_hash_transition(object, parse_object(transition)) }
+      object.transitions.reverse.map { |transition| data_hash_transition(object, parse_object(transition)) }
     end.flatten
   end
 
