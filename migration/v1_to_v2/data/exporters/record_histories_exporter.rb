@@ -56,7 +56,7 @@ class RecordHistoriesExporter < DataExporter
     objects.map do |object|
       next unless object.histories.present? && object.histories.is_a?(Array)
 
-      object.histories.map do |history|
+      object.histories.reverse.map do |history|
         history_hash = history.to_hash.except('unique_id', 'user_organization', 'prev_revision')
         history_hash['datetime'] = datetime_string(history_hash)
         history_hash['record_changes'] = format_changes(history_hash.delete('changes'))
