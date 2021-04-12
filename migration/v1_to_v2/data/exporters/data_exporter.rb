@@ -33,6 +33,10 @@ class DataExporter
     record_type == 'Case' ? 'Child' : record_type
   end
 
+  def model_class_for_insert(record_type)
+    model_class(record_type)
+  end
+
   def file_for(object_name, index)
     config_dir = "#{@export_dir}/#{object_name.pluralize.underscore}"
     FileUtils.mkdir_p(config_dir)
@@ -52,14 +56,11 @@ class DataExporter
   def ending(object_name)
     [
       "]\n",
-      'records.each do |record|',
-      "  puts \"Creating #{object_name} \#{record.id}\"",
-      "  raw_sql = \"INSERT INTO \#{record.class.table_name} (\#{record.attributes.keys}) VALUES (\#{record.attributes.values})\"",
-      '  ActiveRecord::Base.connection.execute(raw_sql)',
-      'rescue ActiveRecord::RecordNotUnique',
-      "  puts \"Skipping. #{object_name} \#{record.id} already exists!\"",
+      "puts \"Creating #{object_name.pluralize}\"",
+      "begin",
+      "  InsertAllService.insert_all(#{model_class_for_insert(object_name)}, records.map(&:attributes), nil)",
       'rescue StandardError => e',
-      "  puts \"Cannot create \#{record.id}. Error \#{e.message}\"",
+      "  puts \"Cannot create #{object_name.pluralize}. Error \#{e.message}\"",
       "end\n"
     ].join("\n").freeze
   end
