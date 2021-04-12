@@ -52,8 +52,19 @@ Copy the import script to the v2 server
   Ex:   /home/ubuntu/import_data.rb
         /home/ubuntu/record-data-files/*
 
+Copy the users import script to the v2 server.  (See README in users directory)
+-------------------------------------------------------------------------------
+
+If you have any implementation specific migrations, copy them to the v2 server
+------------------------------------------------------------------------------
+
+
+
 ON THE v2 SERVER
 ----------------------
+
+Run user migrations.  (See README in users directory)
+------------------------------------------------------
 
 Copy the scripts to the application docker container
 ------------------------------------------------------
@@ -61,9 +72,25 @@ Copy the scripts to the application docker container
 - $ docker cp record-data-files primero_application_1:/srv/primero/application/tmp/.  (where primero_application_1 is the image name)
 - $ docker cp import_data.rb primero_application_1:/srv/primero/application/tmp/.
 
+If you have any implementation specific migrations, copy them to the docker container, same as above
+----------------------------------------------------------------------------------------------------
+EXAMPLE
+- $ docker cp migrations primero_application_1:/srv/primero/application/tmp/.
+
 
 Run the script in the docker container
 ---------------------------------------
 - $ sudo docker exec -it primero_application_1 bash  (to access the docker container)
 - $ cd /srv/primero/application
 - $ rails r ./tmp/import_data.rb > import_data.out
+
+If you have any implementation specific migrations, run them in the docker container
+------------------------------------------------------------------------------------
+EXAMPLE
+- $ rails r tmp/migrations/000_migrate_incident_fields.rb
+
+
+Still in the docker container, reindex solr
+-------------------------------------------
+- $ rake sunspot:remove_all
+- $ rake sunspot:reindex
