@@ -18,6 +18,10 @@ class TransitionDataExporter < DataExporter
     new_type == 'Case' ? 'Child' : new_type
   end
 
+  def model_class_for_insert(_record_type)
+    'Transition'
+  end
+
   def new_string(_record_type)
     'Transition.new'
   end
