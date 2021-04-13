@@ -162,6 +162,15 @@ class DataExporter
     data_hash
   end
 
+  def ownership_fields(object)
+    return {} unless object.respond_to?(:associated_user_names)
+
+    data_hash = {}
+    data_hash['associated_user_names'] = object.associated_user_names
+    data_hash['associated_user_agencies'] = User.find_by_user_names(data_hash['associated_user_names']).map(&:organization)
+    data_hash
+  end
+
   def parse_object(object)
     # TODO: was using .compact instead of .reject but it was throwing away false values.  We want to keep those
     data_hash = JSON.parse(object.to_json)&.reject { |_, v| v.nil? || v == [] }&.except('histories', '_attachments',

@@ -6,6 +6,10 @@ require_relative('data_exporter.rb')
 class LinkedIncidentDataExporter < DataExporter
   private
 
+  def parse_object(object)
+    super(object).merge(ownership_fields(object))
+  end
+
   def model_class(_record_type)
     'Incident'
   end

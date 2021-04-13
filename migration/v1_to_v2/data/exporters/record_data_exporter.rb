@@ -6,6 +6,10 @@ require_relative('data_exporter.rb')
 class RecordDataExporter < DataExporter
   private
 
+  def parse_object(object)
+    super(object).merge(ownership_fields(object))
+  end
+
   def migrate_notes(notes)
     notes.each do |note|
       note['note_date'] = note.delete('notes_date')
