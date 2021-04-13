@@ -14,8 +14,16 @@ class LinkedIncidentDataExporter < DataExporter
     'Incident'
   end
 
+  def identification_fields
+    data_hash = {}
+    data_hash['unique_identifier'] = UUIDTools::UUID.random_create.to_s
+    data_hash['short_id'] = data_hash['unique_identifier'].last 7
+    data_hash['incident_id'] = data_hash['unique_identifier']
+    data_hash
+  end
+
   def data_hash_incident_from_case(data_hash)
-    data_hash = data_hash_incident(data_hash)
+    data_hash = data_hash_incident(data_hash).merge(identification_fields)
     data_hash.except('incident_detail_id')
   end
 

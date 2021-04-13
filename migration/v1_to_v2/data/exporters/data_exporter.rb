@@ -56,7 +56,7 @@ class DataExporter
   def ending(object_name)
     [
       "]\n",
-      "puts \"Creating #{object_name.pluralize}\"",
+      "puts \"Creating \#{records.count} #{object_name.pluralize}\"",
       "begin",
       "  InsertAllService.insert_all(#{model_class_for_insert(object_name)}, records.map(&:attributes), nil)",
       'rescue StandardError => e',
@@ -196,7 +196,7 @@ class DataExporter
 
   def object_data_hash(object_name, object)
     data_hash = {}
-    data_hash['id'] = uuid_format(object.id)
+    data_hash['id'] = object.id.present? ? uuid_format(object.id) : UUIDTools::UUID.random_create.to_s
     data_hash['incident_case_id'] = uuid_format(object&.incident_case_id) if object&.incident_case_id.present?
     data_hash['data'] = send("data_hash_#{object_name.underscore}", parse_object(object))
     data_hash
