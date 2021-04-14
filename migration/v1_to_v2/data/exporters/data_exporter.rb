@@ -54,11 +54,12 @@ class DataExporter
   # Things such as permissions may have changed since these records were created
   # We still want the record to be migrated
   def ending(object_name)
+    class_name = model_class_for_insert(object_name)
     [
       "]\n",
       "puts \"Creating \#{records.count} #{object_name.pluralize}\"",
       "begin",
-      "  InsertAllService.insert_all(#{model_class_for_insert(object_name)}, records.map(&:attributes), nil)",
+      "  InsertAllService.insert_all(#{class_name}, records.map { |r| r.attributes.slice(*#{class_name}.column_names)}, nil)",
       'rescue StandardError => e',
       "  puts \"Cannot create #{object_name.pluralize}. Error \#{e.message}\"",
       "end\n"
