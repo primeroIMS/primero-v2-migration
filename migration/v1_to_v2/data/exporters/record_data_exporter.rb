@@ -29,7 +29,7 @@ class RecordDataExporter < DataExporter
 
     # These are stored in separate tables in v2.  They will be migrated in other scripts
     data_hash.except('other_documents', 'photo_keys', 'current_photo_key', 'document_keys', 'audio_attachments',
-                     'recorded_audio', 'incident_details', 'transitions', 'flags', 'approval_subforms')
+                     'recorded_audio', 'incident_details', 'transitions', 'flags')
   end
 
   def data_hash_tracing_request(data_hash)
