@@ -59,6 +59,7 @@ class UsersExporter
       begin
         write_beginning(file)
         User.each_slice(@batch_size) { |batch| write_batch(file, batch) }
+        write_batch(file, [migration_system_user])
         write_ending(file)
       rescue StandardError => e
         @log.error(e)
@@ -126,6 +127,22 @@ class UsersExporter
       "  puts 'send_welcome_email will be skipped because the admin user: #{@admin_user_name} was not created.'",
       "end\n\n"
     ].join("\n")
+  end
+
+  def migration_system_user
+    password = SecureRandom.base64(40)
+    User.new(
+      user_name: 'migration_system_user',
+      password: password,
+      password_confirmation: password,
+      full_name: 'Migration System User',
+      send_mail: 'false',
+      disabled: 'true',
+      organization: Agency.all.select{|agency| agency.name_en == 'UNICEF'}.first.id,
+      role_ids: [Role.by_name(key: "Superuser").first.id],
+      module_ids: PrimeroModule.all.map(&:id),
+      user_group_ids: UserGroup.all.map(&:id)
+    )
   end
 
   def write_batch(file, batch)
