@@ -169,7 +169,9 @@ class DataExporter
     return data_hash unless object.respond_to?(:associated_user_names)
 
     data_hash['associated_user_names'] = object.associated_user_names
-    data_hash['associated_user_agencies'] = User.find_by_user_names(data_hash['associated_user_names']).map(&:organization)
+    data_hash['associated_user_agencies'] = User.find_by_user_names(data_hash['associated_user_names']).map(&:organization).uniq
+    object.update_associated_user_groups
+    data_hash['associated_user_groups'] = (object.owned_by_groups + object.associated_user_groups).uniq
     data_hash
   end
 

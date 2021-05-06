@@ -94,7 +94,9 @@ class RecordHistoriesExporter < DataExporter
     subform_ids = change.keys
 
     subform_ids.each_with_object('to' => nil, 'from' => nil) do |elem, acc|
-      subform_fields = change[elem].keys
+      next if change[elem].blank?
+
+      subform_fields = change[elem]&.keys
       subform_change = change[elem]
 
       subform_from = build_subform(subform_change, subform_fields, 'from')
