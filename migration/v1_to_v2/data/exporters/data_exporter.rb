@@ -130,7 +130,7 @@ class DataExporter
       array_value_to_ruby_string(value, include_blank)
     elsif value.is_a?(Range)
       value
-    elsif value.is_a?(String) && value.include?('.parse(')
+    elsif value.is_a?(String) && (value.include?('.parse(') || value.include?('.find_by('))
       value
     else
       value.to_json

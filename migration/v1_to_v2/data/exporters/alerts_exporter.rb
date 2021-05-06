@@ -78,12 +78,12 @@ class AlertsExporter < DataExporter
   def user_string(object_hash)
     return unless object_hash['user'].present?
 
-    "User.find_by(user_name: \"#{object_hash['user']}\"),"
+    "User.find_by(user_name: \"#{object_hash['user']}\")"
   end
 
   def agency_string(object_hash)
     return unless object_hash['agency'].present?
 
-    "Agency.find_by(unique_id: \"#{object_hash['agency']}\"),"
+    "Agency.find_by(unique_id: \"#{object_hash['agency']}\")"
   end
 end
