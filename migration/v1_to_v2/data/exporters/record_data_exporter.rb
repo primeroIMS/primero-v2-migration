@@ -26,6 +26,7 @@ class RecordDataExporter < DataExporter
     data_hash['assessment_approved_comments'] = data_hash.delete('bia_approved_comments') if keys.include?('bia_approved_comments')
     data_hash['approval_status_assessment'] = data_hash.delete('approval_status_bia') if keys.include?('approval_status_bia')
     data_hash['status'] = data_hash.delete('child_status')
+    data_hash['reassigned_transferred_on'] = data_hash.delete('reassigned_tranferred_on') if keys.include?('reassigned_tranferred_on')
 
     # These are stored in separate tables in v2.  They will be migrated in other scripts
     data_hash.except('other_documents', 'photo_keys', 'current_photo_key', 'document_keys', 'audio_attachments',
