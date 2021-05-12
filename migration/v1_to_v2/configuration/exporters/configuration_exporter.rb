@@ -58,7 +58,8 @@ class ConfigurationExporter
       'cp_incident_date' => 'incident_date',
       'cp_incident_location' => 'incident_location',
       'cp_incident_sexual_violence_type' => 'cp_incident_violence_type',
-      'gbv_sexual_violence_type' => 'cp_incident_violence_type'
+      'gbv_sexual_violence_type' => 'cp_incident_violence_type',
+      'reassigned_tranferred_on' => 'reassigned_transferred_on'
     }.freeze
   end
 
