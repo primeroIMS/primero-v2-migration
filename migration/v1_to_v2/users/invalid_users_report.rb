@@ -49,6 +49,3 @@ write_log(user_no_agency, 'user-no-agency')
 write_log(user_no_location, 'user-no-location')
 write_log(user_bad_user_group, 'user-bad-user-group')
 write_log(dupe_emails.values.flatten, 'user-duplicate-email')
-
-
-
