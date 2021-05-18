@@ -10,25 +10,12 @@
 ENV['PRIMERO_BOOTSTRAP'] = 'true'
 ActiveJob::Base.queue_adapter = :async
 
-puts 'This is a temporary hack until we get field order sorted out. Please fix!!!!!!!'
-puts 'Deleting ALL FIELDS!!!!'
-Field.destroy_all
-puts 'Deleting ALL LOOKUPS!!!!'
-Lookup.destroy_all
-puts 'Deleting ALL SystemSettings!!!!'
-SystemSettings.destroy_all
-puts 'Deleting ALL ContactInformation!!!!'
-ContactInformation.destroy_all
-
 # Reseed the lookups
 puts 'Seeding Lookups'
 require File.dirname(__FILE__) + '/lookups/lookup.rb'
 
-# TODO
-puts 'WARNING! Seeding Locations is turned off!'
-# Reseed the locations
-#puts 'Seeding Locations'
-#require File.dirname(__FILE__) + '/locations/locations.rb'
+puts 'Seeding Locations'
+require File.dirname(__FILE__) + '/locations/locations.rb'
 
 # Export Configuration must be loaded before the System Settings are loaded
 puts 'Seeding Export Configuration'
