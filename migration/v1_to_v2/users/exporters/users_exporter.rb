@@ -183,11 +183,14 @@ class UsersExporter
 
       next unless field_value.present?
 
-      if field_name == :user_group_ids
-        next("    user_groups: #{field_value}.map { |unique_id| @user_groups[unique_id] }.compact,")
+      case field_name
+      when :user_group_ids
+        "    user_groups: #{field_value}.map { |unique_id| @user_groups[unique_id] }.compact,"
+      when :location
+        "    #{field_name}: \"#{field_value.gsub(/[^0-9A-Za-z]/, '')}\","
+      else
+        "    #{field_name}: \"#{field_value}\","
       end
-
-      "    #{field_name}: \"#{field_value}\","
     end.compact.join("\n")
   end
 
