@@ -29,6 +29,10 @@ class DataExporter
     @indent -= 1
   end
 
+  def location_field_names
+    @location_field_names ||= FormSection::RECORD_TYPES.map {|type| Field.all_location_field_names(type)}.flatten.uniq
+  end
+
   def model_class(record_type)
     record_type == 'Case' ? 'Child' : record_type
   end
@@ -149,12 +153,17 @@ class DataExporter
     valid_key?(key) ? key : "'#{key}'"
   end
 
-  def flag_date_fields(object, data_hash)
+  def parse_date_and_location_fields(object, data_hash)
     data_hash.each do |key, value|
+      if location_field_names.include?(key)
+        data_hash[key] = value&.gsub(/[^0-9A-Za-z]/, '')
+        next
+      end
+
       next unless object[key].is_a?(DateTime) || object[key].is_a?(Date) || (value.is_a?(Array) && value.first&.is_a?(Hash))
 
       if value.is_a?(Array)
-        data_hash[key] = value.map.with_index { |v, index| flag_date_fields(object[key][index], v) }
+        data_hash[key] = value.map.with_index { |v, index| parse_date_and_location_fields(object[key][index], v) }
         next
       end
 
@@ -181,7 +190,7 @@ class DataExporter
                                                                                           'other_documents', 'flags',
                                                                                           '_id', '_rev',
                                                                                           'couchrest-type')
-    flag_date_fields(object, data_hash)
+    parse_date_and_location_fields(object, data_hash)
   end
 
   def uuid_format(old_id)
