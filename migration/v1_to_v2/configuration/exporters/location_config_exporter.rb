@@ -12,10 +12,8 @@ class LocationConfigExporter
 
   ENDING = [
     "]\n",
-    "Location.locations_by_code = locations.map { |l| [l.location_code, l] }.to_h\n",
-    "locations.each do |loc|",
-    "  loc.set_name_from_hierarchy_placenames",
-    "end\n",
+    "Location.locations_by_code = locations.map { |l| [l.location_code, l] }.to_h",
+    "locations.each(&:name_from_hierarchy)",
     "locations.each do |loc|",
     "  puts \"Creating location \#{loc.location_code}\"",
     "  loc.save!",
