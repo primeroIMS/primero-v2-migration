@@ -31,7 +31,6 @@ Tar up the seed-files
 
 
 
-
 Load the generated user migration scripts on a v2 server
 ========================================================
 
@@ -68,3 +67,18 @@ Run the script in the docker container
 - $ cd /srv/primero/application
 - $ rails r ./tmp/import_users.rb > import_users.out
 
+
+WARNING - Potential issue with Users and User Groups getting out of sync
+------------------------------------------------------------------------
+There is a many to many relationship between Users and User Groups.
+There is a link table user_groups_users to manage this association.
+If during user migration testing you delete all users and re-import, this association can get out of sync.
+Also, if you delete the UserGroups table and reload the configuration, this association can get out of sync.
+It is important that your load_configuration script updates UserGroups without first deleting them.
+To resolve:
+- From rails console in the application container:
+  - Delete all rows from user_groups_users table:  `$ User.connection.execute('Delete from user_groups_users')`
+  - Delete all rows from the users table: `$ User.delete_all`
+- From command line in the application container:
+  - Re-run the user import
+  `
