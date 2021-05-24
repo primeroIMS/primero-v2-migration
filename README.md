@@ -8,14 +8,14 @@ Configuration
 - Copy the generated seeds to a config repo branch
 - Add in the load_configuration.rb script to the config repo branch
 - Deploy that configuration to the v2 server
-- Refer to the [Configuration README](v1_to_v2/configuration/README.md) for more detail.
+- Refer to the [Configuration README](./migration/v1_to_v2/configuration/README.md) for more detail.
 
 User Migration
 =================
 - Run users/export_data.rb on the 1.7 server to generate v2 compatible ruby data migration scripts.
 - Copy the generated user migration scripts to the target v2 server
 - Run the import_users.rb script on the target v2 server to execute the generated user migration scripts.
-- Refer to the [User Migration README](v1_to_v2/users/README.md) for more detail.
+- Refer to the [User Migration README](./migration/v1_to_v2/users/README.md) for more detail.
 
 
 Data Migration
@@ -23,4 +23,4 @@ Data Migration
 - Run data/export_data.rb on the 1.7 server to generate v2 compatible ruby data migration scripts.
 - Copy the generated data migration scripts to the target v2 server
 - Run the import_data.rb script on the target v2 server to execute the generated data migration scripts.
-- Refer to the [Data Migration README](v1_to_v2/data/README.md) for more detail.
+- Refer to the [Data Migration README](./migration/v1_to_v2/data/README.md) for more detail.
