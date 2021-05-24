@@ -25,11 +25,9 @@ Tar up the record-data-files
 ----------------------------
 - exit back to the ubuntu user
 - $ cd /srv/primero/application
-- $ sudo tar czvf record-data-filess.tar.gz record-data-files
+- $ sudo tar czvf record-data-files.tar.gz record-data-files
 - $ cd
 - $ sudo mv /srv/primero/application/record-data-files.tar.gz .
-
-
 
 
 
@@ -52,25 +50,33 @@ Copy the import script to the v2 server
   Ex:   /home/ubuntu/import_data.rb
         /home/ubuntu/record-data-files/*
 
-Copy the users import script to the v2 server.  (See README in users directory)
+Copy the users import script to the v2 server.
 -------------------------------------------------------------------------------
+- Refer to the [User Migration README](../users/README.md) for more detail.
+
 
 If you have any implementation specific migrations, copy them to the v2 server
 ------------------------------------------------------------------------------
-
+Some configurations require additional migration scripts that do not apply to all configurations.
+Those migrations are to be created and stored in the configuration repository of your particular configuration.
+- Create these under a migrations folder under your configuration root directory.
+- Use naming format:  000_<script name>, 001_<second script name>, 002_<third script name>, etc.
 
 
 ON THE v2 SERVER
 ----------------------
 
-Run user migrations.  (See README in users directory)
+Run user migrations.
 ------------------------------------------------------
+- Refer to the [User Migration README](../users/README.md) for more detail.
+
 
 Copy the scripts to the application docker container
 ------------------------------------------------------
 - $ docker ps   (to get the name of the application image)
 - $ docker cp record-data-files primero_application_1:/srv/primero/application/tmp/.  (where primero_application_1 is the image name)
 - $ docker cp import_data.rb primero_application_1:/srv/primero/application/tmp/.
+
 
 If you have any implementation specific migrations, copy them to the docker container, same as above
 ----------------------------------------------------------------------------------------------------
