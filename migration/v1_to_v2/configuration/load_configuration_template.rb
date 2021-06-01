@@ -42,6 +42,9 @@ require File.dirname(__FILE__) + '/roles/role.rb'
 puts 'Seeding Agencies'
 require File.dirname(__FILE__) + '/agencies/agency.rb'
 
+puts 'Seeding Agency Logos'
+Dir[File.dirname(__FILE__) + '/agency_logos/*.rb'].sort.each(&method(:require))
+
 puts 'Seeding User Groups'
 require File.dirname(__FILE__) + '/user_groups/user_group.rb'
 
