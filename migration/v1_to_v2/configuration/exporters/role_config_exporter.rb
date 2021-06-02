@@ -224,6 +224,7 @@ class RoleConfigExporter < ConfigurationExporter
 
   def default_dashboard_permissions(opts = {})
     new_actions = permission_actions_dashboard_overview([], opts)
+    new_actions << 'dash_flags' if opts[:case_permissions].present?
     new_actions += permission_actions_dashboard_shared(view_assessment: false,
                                                        case_permissions: opts[:case_permissions])
     new_actions += permission_actions_dashboard_group_all(opts)
