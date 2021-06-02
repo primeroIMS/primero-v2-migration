@@ -22,6 +22,8 @@ class BaseConfigExporter < ConfigurationExporter
   end
 
   def convert_field_map(field_map)
+    return field_map if field_map['fields'].blank?
+
     field_map['fields'] = field_map['fields'].map do |f|
       { 'source' => f['source'].last, 'target' => f['target'] } if f['source'].first != 'incident_details'
     end.compact
