@@ -73,10 +73,10 @@ class ConfigurationExporter
     new_field_names
   end
 
-  def forms_with_subforms
+  def forms_with_subforms(opts = {})
     return @forms_with_subforms if @forms_with_subforms.present?
 
-    fs = FormSection.all.reject(&:is_nested).group_by(&:unique_id)
+    fs = FormSection.all.reject{ |form| form.is_nested || (opts[:visible_only] && !form.visible) }.group_by(&:unique_id)
     grouped_forms = {}
     fs.each do |k, v|
       # Hide the Incident Details form
