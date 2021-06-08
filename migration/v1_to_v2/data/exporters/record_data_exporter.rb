@@ -35,7 +35,9 @@ class RecordDataExporter < DataExporter
 
   def data_hash_tracing_request(data_hash)
     data_hash['status'] = data_hash.delete('inquiry_status')
-    data_hash
+
+    # These are stored in separate tables in v2.  They will be migrated in other scripts
+    data_hash.except('tracing_request_subform_section')
   end
 
   def data_object_names

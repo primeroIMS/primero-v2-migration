@@ -8,13 +8,15 @@ require_relative('exporters/flags_exporter.rb')
 require_relative('exporters/linked_incident_data_exporter.rb')
 require_relative('exporters/record_histories_exporter.rb')
 require_relative('exporters/transition_data_exporter.rb')
+require_relative('exporters/traces_exporter.rb')
 
 def exporters
   %w[RecordDataExporter AlertsExporter AttachmentExporter FlagsExporter LinkedIncidentDataExporter
-     RecordHistoriesExporter TransitionDataExporter].freeze
+     RecordHistoriesExporter TransitionDataExporter TracesExporter].freeze
 end
 
 exporters.each do |exporter|
   data_exporter = Object.const_get(exporter).new(batch_size: 250)
   data_exporter.export
 end
+
