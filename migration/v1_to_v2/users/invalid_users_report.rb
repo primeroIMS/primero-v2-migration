@@ -7,6 +7,7 @@ require 'csv'
 # -  users with multiple roles
 # -  users with no location
 # -  users with blank or bogus user_group_ids
+# -  users with no email
 # -  users with duplicate emails
 #
 # To execute this script:
@@ -31,6 +32,7 @@ user_multiple_roles = []
 user_no_location = []
 user_bad_user_group = []
 user_no_agency = []
+user_no_email = []
 
 user_group_ids = UserGroup.all.map(&:id)
 roles = Role.all.all
@@ -39,6 +41,7 @@ User.all.each do |user|
   user_multiple_roles << user if user.role_ids.count > 1
   user_no_agency << user if user.agency.blank?
   user_no_location << user if user.location.blank?
+  user_no_email << user if user.email.blank?
   user_bad_user_group << user if user.user_group_ids.any?{|ug| ug.blank? || user_group_ids.exclude?(ug)}
 end
 
@@ -48,4 +51,5 @@ write_log(user_multiple_roles, 'user-multiple-roles')
 write_log(user_no_agency, 'user-no-agency')
 write_log(user_no_location, 'user-no-location')
 write_log(user_bad_user_group, 'user-bad-user-group')
+write_log(user_no_email, 'user-no-email')
 write_log(dupe_emails.values.flatten, 'user-duplicate-email')
