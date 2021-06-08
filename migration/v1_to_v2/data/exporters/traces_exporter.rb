@@ -32,11 +32,11 @@ class TracesExporter < DataExporter
       "]\n",
       "traces.each do |trace|",
       "  puts \"Creating Trace...\"",
-      "  flag.save!",
+      "  trace.save!",
       "rescue ActiveRecord::RecordNotUnique",
-      "  puts \"Skipping creation of trace with id \#{trace.record_id}. It already exists.\"",
+      "  puts \"Skipping creation of trace with id \#{trace.id}. It already exists.\"",
       "rescue StandardError => e",
-      "  puts \"Cannot create trace with id \#{trace.record_id} Error \#{e.message}\"",
+      "  puts \"Cannot create trace with id \#{trace.id} Error \#{e.message}\"",
       "  raise e",
       "end\n"
     ].join("\n").freeze
@@ -46,20 +46,13 @@ class TracesExporter < DataExporter
 
   def object_data_hash(object)
     object.tracing_request_subform_section.map do |trace|
-      # TODO - WIP
       trace_hash = {}
-      trace_hash['id'] = 'xxx'
-      trace_hash['tracing_request_id'] = 'xxx'
-      trace_hash['matched_case_id'] = 'xxx'
-      trace_hash['data'] = {}
-
-      trace_hash = trace.to_hash
-      # alert_hash['user'] = user_string(alert_hash)
-      # alert_hash['agency'] = agency_string(alert_hash)
-      # alert_hash['date'] = date_string(alert_hash)
-      # alert_hash['record_id'] = uuid_format(object.id)
-      # alert_hash['record_type'] = object.class.name
-      # handle_incident_from_case_alert(alert_hash)
+      trace_hash['id'] = trace.unique_id
+      trace_hash['tracing_request_id'] = uuid_format(object.id)
+      trace_hash['matched_case_id'] = uuid_format(trace.matched_case_id)
+      trace_data = trace.to_hash.except('matched_case_id')
+      trace_hash['data'] = parse_object(trace_data)
+      trace_hash
     end
   end
 
