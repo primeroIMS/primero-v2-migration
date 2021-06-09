@@ -56,7 +56,7 @@ class RecordHistoriesExporter < DataExporter
     objects.map do |object|
       next unless object.histories.present? && object.histories.is_a?(Array)
 
-      object.histories.map do |history|
+      object.histories.reverse.map do |history|
         history_hash = history.to_hash.except('unique_id', 'user_organization', 'prev_revision')
         history_hash['datetime'] = datetime_string(history_hash)
         history_hash['record_changes'] = format_changes(history_hash.delete('changes'))
@@ -94,7 +94,9 @@ class RecordHistoriesExporter < DataExporter
     subform_ids = change.keys
 
     subform_ids.each_with_object('to' => nil, 'from' => nil) do |elem, acc|
-      subform_fields = change[elem].keys
+      next if change[elem].blank?
+
+      subform_fields = change[elem]&.keys
       subform_change = change[elem]
 
       subform_from = build_subform(subform_change, subform_fields, 'from')

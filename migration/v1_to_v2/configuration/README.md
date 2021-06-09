@@ -30,7 +30,7 @@ Tar up the seed-files
 - $ sudo mv /srv/primero/application/seed-files.tar.gz .
 
 
-Copy / scp the tar file back to your local system
+Copy the tar file back to your local system
 -------------------------------------------------
 
 
@@ -43,21 +43,10 @@ Untar the tar file on your local system
 $ tar -xzvf seed-files.tar.gz
 
 
-Add these seed files to a configuration repo branch
----------------------------------------------------
-
-
-Copy the load_configuration_template.rb script to the root seed-files directory in your repo branch
----------------------------------------------------------------------------------------------------
-
-
-Update the load configuration script as needed if necessary
------------------------------------------------------------
-
-
-Make sure the target v2 system has the appropriate locales as were on the v1.7 system
--------------------------------------------------------------------------------------
-
-
-Deploy the configuration to the v2 system
------------------------------------------
+Deploy the configuration to the v2 server from a configuration repo branch
+--------------------------------------------------------------------------
+- Add the generated seed files from the tar file to a configuration repo branch
+- Copy the load_configuration_template.rb script to the root seed-files directory in your repo branch
+- Update the load configuration script as needed if necessary
+- Make sure the target v2 system has the appropriate locales as were on the v1.7 system
+- Deploy the configuration to the v2 system

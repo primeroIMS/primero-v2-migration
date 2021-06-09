@@ -5,13 +5,42 @@ require_relative('data_exporter.rb')
 # Exports v1 Primero incident data that are linked to cases as v2 compatible ruby script files.
 class LinkedIncidentDataExporter < DataExporter
   private
+  def parse_object(object)
+    super(object).merge(ownership_fields(object))
+  end
+
+  def default_user
+    @default_user ||= User.new(
+      user_name: 'migration_system_user',
+      full_name: 'Migration System User',
+      send_mail: 'false',
+      disabled: 'true',
+      organization: Agency.all.select{|agency| agency.name_en == 'UNICEF'}.first.id,
+      role_ids: [Role.by_name(key: "Superuser").first.id],
+      module_ids: PrimeroModule.all.map(&:id),
+      user_group_ids: UserGroup.all.map(&:id)
+    )
+  end
+
+  def copy_case_owner_fields(child, incident)
+    incident.owned_by_agency = child.owned_by_agency
+    incident
+  end
 
   def model_class(_record_type)
     'Incident'
   end
 
+  def identification_fields
+    data_hash = {}
+    data_hash['unique_identifier'] = UUIDTools::UUID.random_create.to_s
+    data_hash['short_id'] = data_hash['unique_identifier'].last 7
+    data_hash['incident_id'] = data_hash['unique_identifier']
+    data_hash
+  end
+
   def data_hash_incident_from_case(data_hash)
-    data_hash = data_hash_incident(data_hash)
+    data_hash = data_hash_incident(data_hash).merge(identification_fields)
     data_hash.except('incident_detail_id')
   end
 
@@ -24,7 +53,9 @@ class LinkedIncidentDataExporter < DataExporter
       next if incident_case_ids.include?(child.id)
 
       child.incident_details.map do |incident_detail|
-        incident = Incident.make_new_incident(child.module_id, child, child.module_id, incident_detail.unique_id, nil)
+        incident = Incident.make_new_incident(child.module_id, child, child.module_id, incident_detail.unique_id,
+                                              default_user)
+        incident = copy_case_owner_fields(child, incident)
         object_data_hash(object_name, incident)
       end
     end.flatten

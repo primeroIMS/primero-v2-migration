@@ -3,11 +3,11 @@
 # Script to run the generated data import scripts
 def records_to_import
   %w[Case Incident TracingRequest IncidentFromCase CaseTransition IncidentTransition TracingRequestTransition
-     CaseAttachment IncidentAttachment TracingRequestAttachment Alert Flag RecordHistory].freeze
+     CaseAttachment IncidentAttachment TracingRequestAttachment Alert Flag RecordHistory Trace].freeze
 end
 
 def record_names
-  %w[Child Incident TracingRequest Transition Attachment Alert Flag RecordHistory].freeze
+  %w[Child Incident TracingRequest Transition Attachment Alert Flag RecordHistory Trace].freeze
 end
 
 def print_record_counts

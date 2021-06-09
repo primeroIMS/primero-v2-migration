@@ -58,7 +58,8 @@ class ConfigurationExporter
       'cp_incident_date' => 'incident_date',
       'cp_incident_location' => 'incident_location',
       'cp_incident_sexual_violence_type' => 'cp_incident_violence_type',
-      'gbv_sexual_violence_type' => 'cp_incident_violence_type'
+      'gbv_sexual_violence_type' => 'cp_incident_violence_type',
+      'reassigned_tranferred_on' => 'reassigned_transferred_on'
     }.freeze
   end
 
@@ -72,10 +73,10 @@ class ConfigurationExporter
     new_field_names
   end
 
-  def forms_with_subforms
+  def forms_with_subforms(opts = {})
     return @forms_with_subforms if @forms_with_subforms.present?
 
-    fs = FormSection.all.reject(&:is_nested).group_by(&:unique_id)
+    fs = FormSection.all.reject{ |form| form.is_nested || (opts[:visible_only] && !form.visible) }.group_by(&:unique_id)
     grouped_forms = {}
     fs.each do |k, v|
       # Hide the Incident Details form

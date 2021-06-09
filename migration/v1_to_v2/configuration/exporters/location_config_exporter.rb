@@ -12,10 +12,8 @@ class LocationConfigExporter
 
   ENDING = [
     "]\n",
-    "Location.locations_by_code = locations.map { |l| [l.location_code, l] }.to_h\n",
-    "locations.each do |loc|",
-    "  loc.set_name_from_hierarchy_placenames",
-    "end\n",
+    "Location.locations_by_code = locations.map { |l| [l.location_code, l] }.to_h",
+    "locations.each(&:name_from_hierarchy)",
     "locations.each do |loc|",
     "  puts \"Creating location \#{loc.location_code}\"",
     "  loc.save!",
@@ -79,7 +77,7 @@ class LocationConfigExporter
     ruby_string = '  Location.new('
 
     ruby_string += build_placename(location)
-    ruby_string += "location_code:\"#{location['location_code']}\", "
+    ruby_string += "location_code:\"#{location['location_code'].gsub(/[^0-9A-Za-z]/, '')}\", "
     ruby_string += "admin_level: #{location['admin_level'] || 'nil'}, "
     ruby_string += "type: \"#{location['type']}\", "
     ruby_string += "hierarchy_path: '#{build_hierarchy_path(location)}'"
@@ -105,6 +103,6 @@ class LocationConfigExporter
   end
 
   def build_hierarchy_path(location)
-    (location['hierarchy'] + [location['location_code']]).join('.')
+    (location['hierarchy'] + [location['location_code']]).map {|loc| loc.gsub(/[^0-9A-Za-z]/, '')}.join('.')
   end
 end

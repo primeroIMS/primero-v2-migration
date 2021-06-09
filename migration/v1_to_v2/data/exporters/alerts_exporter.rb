@@ -55,9 +55,18 @@ class AlertsExporter < DataExporter
         alert_hash['date'] = date_string(alert_hash)
         alert_hash['record_id'] = uuid_format(object.id)
         alert_hash['record_type'] = object.class.name
-        alert_hash
+        handle_incident_from_case_alert(alert_hash)
       end
     end.compact.flatten
+  end
+
+  def handle_incident_from_case_alert(object_hash)
+    return object_hash unless object_hash['type'] == 'incident_details'
+
+    object_hash['alert_for'] = 'field_change'
+    object_hash['type'] = 'incident_from_case'
+    object_hash['form_sidebar_id'] = 'incident_from_case'
+    object_hash
   end
 
   def date_string(object_hash)
@@ -69,12 +78,12 @@ class AlertsExporter < DataExporter
   def user_string(object_hash)
     return unless object_hash['user'].present?
 
-    "User.find_by(user_name: \"#{object_hash['user']}\"),"
+    "User.find_by(user_name: \"#{object_hash['user']}\")"
   end
 
   def agency_string(object_hash)
     return unless object_hash['agency'].present?
 
-    "Agency.find_by(unique_id: \"#{object_hash['agency']}\"),"
+    "Agency.find_by(unique_id: \"#{object_hash['agency']}\")"
   end
 end

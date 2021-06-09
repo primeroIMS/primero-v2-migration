@@ -29,8 +29,16 @@ class DataExporter
     @indent -= 1
   end
 
+  def location_field_names
+    @location_field_names ||= FormSection::RECORD_TYPES.map {|type| Field.all_location_field_names(type)}.flatten.uniq
+  end
+
   def model_class(record_type)
     record_type == 'Case' ? 'Child' : record_type
+  end
+
+  def model_class_for_insert(record_type)
+    model_class(record_type)
   end
 
   def file_for(object_name, index)
@@ -50,15 +58,14 @@ class DataExporter
   # Things such as permissions may have changed since these records were created
   # We still want the record to be migrated
   def ending(object_name)
+    class_name = model_class_for_insert(object_name)
     [
       "]\n",
-      'records.each do |record|',
-      "  puts \"Creating #{object_name} \#{record.id}\"",
-      '  record.save!(validate: false)',
-      'rescue ActiveRecord::RecordNotUnique',
-      "  puts \"Skipping. #{object_name} \#{record.id} already exists!\"",
+      "puts \"Creating \#{records.count} #{object_name.pluralize}\"",
+      "begin",
+      "  InsertAllService.insert_all(#{class_name}, records.map { |r| r.attributes.slice(*#{class_name}.column_names)}, nil)",
       'rescue StandardError => e',
-      "  puts \"Cannot create \#{record.id}. Error \#{e.message}\"",
+      "  puts \"Cannot create #{object_name.pluralize}. Error \#{e.message}\"",
       "end\n"
     ].join("\n").freeze
   end
@@ -127,7 +134,7 @@ class DataExporter
       array_value_to_ruby_string(value, include_blank)
     elsif value.is_a?(Range)
       value
-    elsif value.is_a?(String) && value.include?('.parse(')
+    elsif value.is_a?(String) && (value.include?('.parse(') || value.include?('.find_by('))
       value
     else
       value.to_json
@@ -136,21 +143,44 @@ class DataExporter
   # rubocop:enable Metrics/MethodLength
   # rubocop:enable Metrics/AbcSize
 
-  def key_to_ruby(key)
-    key.is_a?(Integer) || key.include?('-') ? "'#{key}'" : key
+  def valid_key?(key)
+    return false if key.is_a?(Integer) || key.include?('-') || key.include?(' ') || !key.match?('^[a-zA-Z]')
+
+    true
   end
 
-  def flag_date_fields(object, data_hash)
+  def key_to_ruby(key)
+    valid_key?(key) ? key : "'#{key}'"
+  end
+
+  def parse_date_and_location_fields(object, data_hash)
     data_hash.each do |key, value|
+      if location_field_names.include?(key)
+        data_hash[key] = value&.gsub(/[^0-9A-Za-z]/, '')
+        next
+      end
+
       next unless object[key].is_a?(DateTime) || object[key].is_a?(Date) || (value.is_a?(Array) && value.first&.is_a?(Hash))
 
       if value.is_a?(Array)
-        data_hash[key] = value.map.with_index { |v, index| flag_date_fields(object[key][index], v) }
+        data_hash[key] = value.map.with_index { |v, index| parse_date_and_location_fields(object[key][index], v) }
         next
       end
 
       data_hash[key] = object[key].is_a?(DateTime) ? "DateTime.parse(\"#{value}\")" : "Date.parse(\"#{value}\")"
     end
+    data_hash
+  end
+
+  def ownership_fields(object)
+    data_hash = {}
+    data_hash['owned_by_agency_id'] = object&.owned_by_agency
+    return data_hash unless object.respond_to?(:associated_user_names)
+
+    data_hash['associated_user_names'] = object.associated_user_names
+    data_hash['associated_user_agencies'] = User.find_by_user_names(data_hash['associated_user_names']).map(&:organization).uniq
+    object.update_associated_user_groups
+    data_hash['associated_user_groups'] = (object.owned_by_groups + object.associated_user_groups).uniq
     data_hash
   end
 
@@ -160,7 +190,7 @@ class DataExporter
                                                                                           'other_documents', 'flags',
                                                                                           '_id', '_rev',
                                                                                           'couchrest-type')
-    flag_date_fields(object, data_hash)
+    parse_date_and_location_fields(object, data_hash)
   end
 
   def uuid_format(old_id)
@@ -179,7 +209,7 @@ class DataExporter
 
   def object_data_hash(object_name, object)
     data_hash = {}
-    data_hash['id'] = uuid_format(object.id)
+    data_hash['id'] = object.id.present? ? uuid_format(object.id) : UUIDTools::UUID.random_create.to_s
     data_hash['incident_case_id'] = uuid_format(object&.incident_case_id) if object&.incident_case_id.present?
     data_hash['data'] = send("data_hash_#{object_name.underscore}", parse_object(object))
     data_hash

@@ -45,9 +45,9 @@ class RoleConfigExporter < ConfigurationExporter
   end
 
   def role_forms(permitted_form_ids)
-    return forms_with_subforms.select { |k, _| permitted_form_ids.include?(k) } if permitted_form_ids.present?
+    return forms_with_subforms(visible_only: true).select { |k, _| permitted_form_ids.include?(k) } if permitted_form_ids.present?
 
-    forms_with_subforms
+    forms_with_subforms(visible_only: true)
   end
 
   def role_form_ids(permitted_form_ids)
@@ -57,12 +57,20 @@ class RoleConfigExporter < ConfigurationExporter
     forms.values.flatten.map(&:unique_id)
   end
 
+  def incident_from_case_cp?(opts = {})
+    return false unless opts[:module_unique_ids].include?('primeromodule-cp')
+
+    opts[:role_form_ids].include?('incident_details_container')
+  end
+
+  def incident_from_case_gbv?(actions, opts = {})
+    return false unless opts[:module_unique_ids].include?('primeromodule-gbv')
+
+    actions.include?('write') && opts[:role_form_ids].include?('action_plan_form')
+  end
+
   def incident_from_case?(actions, opts = {})
-    (opts[:module_unique_ids].include?('primeromodule-cp') &&
-      opts[:role_form_ids].include?('incident_details_container')) ||
-    (opts[:module_unique_ids].include?('primeromodule-gbv') &&
-      actions.include?('write') &&
-      opts[:role_form_ids].include?('action_plan_form'))
+    incident_from_case_cp?(opts) || incident_from_case_gbv?(actions, opts)
   end
 
   def permission_actions_incident_from_case(actions, opts = {})
@@ -224,6 +232,7 @@ class RoleConfigExporter < ConfigurationExporter
 
   def default_dashboard_permissions(opts = {})
     new_actions = permission_actions_dashboard_overview([], opts)
+    new_actions << 'dash_flags' if opts[:case_permissions].present?
     new_actions += permission_actions_dashboard_shared(view_assessment: false,
                                                        case_permissions: opts[:case_permissions])
     new_actions += permission_actions_dashboard_group_all(opts)

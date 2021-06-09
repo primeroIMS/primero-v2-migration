@@ -18,6 +18,10 @@ class TransitionDataExporter < DataExporter
     new_type == 'Case' ? 'Child' : new_type
   end
 
+  def model_class_for_insert(_record_type)
+    'Transition'
+  end
+
   def new_string(_record_type)
     'Transition.new'
   end
@@ -42,7 +46,7 @@ class TransitionDataExporter < DataExporter
     objects.select { |object| object.transitions.present? }.map do |object|
       next unless object.transitions.is_a?(Array)
 
-      object.transitions.map { |transition| data_hash_transition(object, parse_object(transition)) }
+      object.transitions.reverse.map { |transition| data_hash_transition(object, parse_object(transition)) }
     end.flatten
   end
 
