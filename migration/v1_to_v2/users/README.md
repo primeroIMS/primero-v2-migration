@@ -81,4 +81,11 @@ To resolve:
   - Delete all rows from the users table: `$ User.delete_all`
 - From command line in the application container:
   - Re-run the user import
-  `
+
+Reset Passwords
+---------------
+The reset_passwords.rb script is used to reset user passwords
+- To reset to a randdom password and sends the reset password email
+  $ rails r ./tmp/users/reset_passwords.rb 'true'
+- To reset password to 'test123' and do not send the reset password email
+  $ rails r ./tmp/users/reset_passwords.rb 'true'
