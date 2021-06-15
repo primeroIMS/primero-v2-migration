@@ -195,8 +195,17 @@ class DataAnonymizer
   end
 
   def anonymize_record(record, record_type)
-    record.delete_photos(record.photo_keys)
-    record.delete_audio
+    begin
+      record.delete_photos(record.photo_keys)
+    rescue StandardError => e
+      puts "Error deleting photo #{record_type} #{record.id}. Skipping photo delete"
+    end
+
+    begin
+      record.delete_audio
+    rescue StandardError => e
+      puts "Error deleting audio #{record_type} #{record.id}. Skipping audio delete"
+    end
 
     field_map = field_map(record_type)
     return nil if field_map.blank?
