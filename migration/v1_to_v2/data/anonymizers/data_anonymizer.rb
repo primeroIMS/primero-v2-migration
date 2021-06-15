@@ -84,7 +84,7 @@ class DataAnonymizer
       'telephone_caregiver' => 'phone',
       'telephone_caregiver_future' => 'phone',
       'national_id_no' => 'id',
-      'family_details_section||relation_name' => 'name',
+      'family_details_section||relation_name' => 'full_name',
       'family_details_section||relation_identifiers' => 'id',
       'family_details_section||relation_nickname' => 'first_name',
       'family_details_section||relation_address_current' => 'address',
@@ -195,8 +195,17 @@ class DataAnonymizer
   end
 
   def anonymize_record(record, record_type)
-    record.delete_photos(record.photo_keys)
-    record.delete_audio
+    begin
+      record.delete_photos(record.photo_keys)
+    rescue StandardError => e
+      puts "Error deleting photo #{record_type} #{record.id}. Skipping photo delete"
+    end
+
+    begin
+      record.delete_audio
+    rescue StandardError => e
+      puts "Error deleting audio #{record_type} #{record.id}. Skipping audio delete"
+    end
 
     field_map = field_map(record_type)
     return nil if field_map.blank?
