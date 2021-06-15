@@ -84,7 +84,7 @@ class DataAnonymizer
       'telephone_caregiver' => 'phone',
       'telephone_caregiver_future' => 'phone',
       'national_id_no' => 'id',
-      'family_details_section||relation_name' => 'name',
+      'family_details_section||relation_name' => 'full_name',
       'family_details_section||relation_identifiers' => 'id',
       'family_details_section||relation_nickname' => 'first_name',
       'family_details_section||relation_address_current' => 'address',
