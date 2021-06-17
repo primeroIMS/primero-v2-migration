@@ -23,7 +23,18 @@ class LinkedIncidentDataExporter < DataExporter
   end
 
   def copy_case_owner_fields(child, incident)
-    incident.owned_by_agency = child.owned_by_agency
+    incident.owned_by_agency = child&.owned_by_agency
+    incident.owned_by_groups = child&.owned_by_groups
+    incident.owned_by_location = child&.owned_by_location
+    incident.owned_by_user_code = child&.owned_by_user_code
+    incident.owned_by_agency_office = child&.owned_by_agency_office
+
+    incident.assigned_user_names = []
+    incident.associated_user_names = [child.owned_by]
+    # On V2 associated_user_groups are the usergroups of the associated_user_names, in this case only owned_by
+    incident.associated_user_groups = [ child&.owned_by_groups]
+    # On V2 associated_user_agencies are the agencies of the associated_user_names, in this case only owned_by
+    incident.associated_user_agencies = [child&.owned_by_agency]
     incident
   end
 

@@ -172,6 +172,7 @@ class DataExporter
     data_hash
   end
 
+  # TODO: This is not consistent what is happening on app/models/concerns/ownable.rb
   def ownership_fields(object)
     data_hash = {}
     data_hash['owned_by_agency_id'] = object&.owned_by_agency
