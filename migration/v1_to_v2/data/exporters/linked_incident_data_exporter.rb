@@ -24,7 +24,6 @@ class LinkedIncidentDataExporter < DataExporter
 
   def copy_case_owner_fields(child, incident)
     incident.owned_by_agency = child&.owned_by_agency
-    incident.owned_by_agency_id = child&.owned_by_agency
     incident.owned_by_groups = child&.owned_by_groups
     incident.owned_by_location = child&.owned_by_location
     incident.owned_by_user_code = child&.owned_by_user_code
