@@ -109,7 +109,11 @@ class AttachmentExporter < DataExporter
 
       FileUtils.mkdir_p(path_folder)
       File.open("#{path_folder}/#{name}", 'wb') do |f|
-        f.write(record_data.fetch_attachment(key))
+        begin
+          f.write(record_data.fetch_attachment(key))
+        rescue StandardError => e
+          puts "attachement #{key}  for record #{record_data.id} couldnot be exported due to #{e}"
+        end
       end
     end
   end
