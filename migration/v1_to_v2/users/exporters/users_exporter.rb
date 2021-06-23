@@ -160,7 +160,7 @@ class UsersExporter
   end
 
   def stringify_user(user)
-    email = user.email.present? ? user.email : "#{user.user_name}@test.com"
+    email = user.email.present? ? user.email : "#{user.user_name}@primero.org"
     [
       "  {",
       "    user_name: \"#{user.user_name}\",",
