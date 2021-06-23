@@ -186,7 +186,7 @@ class DataAnonymizer
       when 'id'
         value = "test-#{[*'aaa'...'zzz'].sample}-#{[*10000..99999].sample}"
       when 'email'
-        value = "test#{[*1000..9999].sample}@test.com"
+        value = "test#{[*1000..9999].sample}@primero.org"
       when 'subform'
         anonymize_subform(field_map, record, k, v)
       else
