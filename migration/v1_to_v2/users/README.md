@@ -82,6 +82,21 @@ To resolve:
 - From command line in the application container:
   - Re-run the user import
 
+
+Invalid Users Report
+--------------------
+Prior to running migration, generate a list of users that will have problems being migrated to v2.
+This report creates a .csv file for each of these issues
+-  users with multiple roles
+-  users with blank or bogus roles
+-  users with no location
+-  users with blank or bogus user_group_ids
+-  users with no email
+-  users with duplicate emails
+-  users that are disabled  (These users aren't a problem, it will be used later when re-enabling users in v2)
+These .csv files can be combined into a spreadsheet to be given to the users for review
+
+
 Reset Passwords
 ---------------
 The reset_passwords.rb script is used to reset user passwords
@@ -89,3 +104,19 @@ The reset_passwords.rb script is used to reset user passwords
   $ rails r ./tmp/users/reset_passwords.rb 'true'
 - To reset password to 'test123' and do not send the reset password email
   $ rails r ./tmp/users/reset_passwords.rb 'true'
+
+
+Disable or Enable Users
+-----------------------
+Prior to running the migration, get a list of users that are disabled in v1 production.  The list of disabled users is
+included in the invalid_users_report.
+The update_disabled.rb script is used to update the value of user.disabled to true or false
+After the migration has completed, this script should be run to disable all users (set user.disabled = true)
+Then, manually re-enable (user.disabled = false) a designated test user to be used for testing/verification
+When verification is complete and you are ready to go live, run this script to re-enable all users (user.disabled = false)
+except for those users that were already disabled in v1 production.
+- To disable all users
+  $ rails r ./tmp/users/update_disabled.rb 'true'
+- To enable all users except the ones previously disabled in v1 prod
+  (in this example, primero, primero_cp, primero_mgr_cp)
+  $ rails r ./tmp/users/update_disabled.rb 'false' 'primero||primero_cp||primero_mgr_cp'
