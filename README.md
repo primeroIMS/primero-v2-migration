@@ -1,6 +1,11 @@
 These Scripts are for migrating a v1.7 system to a v2 system
 =============================================================
 
+Pre Migration
+=================
+- Prior to running the migration, run the invalid_users_report to get a report of users that will have issues being
+  migrated to v2 and to get a list of users that are currently disabled
+- Refer to the [User Migration README](./migration/v1_to_v2/users/README.md) for more detail.
 
 Configuration
 ==================
@@ -24,3 +29,11 @@ Data Migration
 - Copy the generated data migration scripts to the target v2 server
 - Run the import_data.rb script on the target v2 server to execute the generated data migration scripts.
 - Refer to the [Data Migration README](./migration/v1_to_v2/data/README.md) for more detail.
+
+
+Post Migration
+=================
+- Run the reset_passwords.rb script to update user passwords.
+- Run the updated_disabled.rb script to disable all users.
+- After verification is complete and ready to go live, run the update_disabled.rb script to enable all users.
+- Refer to the [User Migration README](./migration/v1_to_v2/users/README.md) for more detail.

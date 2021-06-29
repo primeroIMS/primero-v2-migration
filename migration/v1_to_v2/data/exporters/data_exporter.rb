@@ -172,7 +172,6 @@ class DataExporter
     data_hash
   end
 
-  # TODO: This is not consistent what is happening on app/models/concerns/ownable.rb
   def ownership_fields(object)
     data_hash = {}
     data_hash['owned_by_agency_id'] = object&.owned_by_agency
@@ -188,9 +187,10 @@ class DataExporter
   def parse_object(object)
     # TODO: was using .compact instead of .reject but it was throwing away false values.  We want to keep those
     data_hash = JSON.parse(object.to_json)&.reject { |_, v| v.nil? || v == [] }&.except('histories', '_attachments',
-                                                                                          'other_documents', 'flags',
-                                                                                          '_id', '_rev',
-                                                                                          'couchrest-type')
+                                                                                        'other_documents', 'flags',
+                                                                                        '_id', '_rev',
+                                                                                        'couchrest-type',
+                                                                                        'owned_by_agency')
     parse_date_and_location_fields(object, data_hash)
   end
 
