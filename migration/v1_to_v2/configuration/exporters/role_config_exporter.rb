@@ -264,6 +264,12 @@ class RoleConfigExporter < ConfigurationExporter
     new_actions
   end
 
+  def role_reporting_location_level(object)
+    return nil if object.reporting_location_level.blank? || system_settings.reporting_location_config.blank?
+
+    system_settings.reporting_location_config.admin_level_map[object.reporting_location_level]
+  end
+
   def role_permissions(permissions, opts = {})
     object_hash = {}
     opts[:role_form_ids] = role_form_ids(opts[:permitted_form_ids])
@@ -287,11 +293,12 @@ class RoleConfigExporter < ConfigurationExporter
 
   def configuration_hash_role(object)
     config_hash = object.attributes
-                        .except('id', 'permissions_list', 'permitted_form_ids')
+                        .except('id', 'permissions_list', 'permitted_form_ids', 'reporting_location_level')
                         .merge(unique_id(object))
                         .with_indifferent_access
     config_hash['is_manager'] = %w[all group].include?(object.group_permission)
     config_hash['module_unique_ids'] = role_module(object)
+    config_hash['reporting_location_level'] = role_reporting_location_level(object)
     config_hash['permissions'] = role_permissions(object.permissions_list,
                                                   id: object.id,
                                                   permitted_form_ids: object.permitted_form_ids,
