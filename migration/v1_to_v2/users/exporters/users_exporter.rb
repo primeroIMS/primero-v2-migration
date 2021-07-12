@@ -51,6 +51,7 @@ class UsersExporter
     @send_reset_email = options[:send_reset_email] == 'true' || options[:send_reset_email] == true
     @admin_user_name = options[:admin_user_name]
     @log = options[:log] || fallback_logger
+    @locale_hash = options[:locale_hash] || {}
   end
 
   def export
@@ -149,6 +150,8 @@ class UsersExporter
     batch.each do |user|
       next if user.user_name == @admin_user_name
 
+      user = migrate_user_locale(user) if @locale_hash.present?
+
       begin
         file.write(stringify_user(user))
         @log.info("User: #{user.user_name} written successfully")
@@ -157,6 +160,13 @@ class UsersExporter
         @log.error("Error when user: #{user.user_name} was written")
       end
     end
+  end
+
+  def migrate_user_locale(user)
+    return if @locale_hash.blank || user.locale.blank?
+
+    user.locale = @locale_hash[user.locale] || user.locale
+    user
   end
 
   def stringify_user(user)
