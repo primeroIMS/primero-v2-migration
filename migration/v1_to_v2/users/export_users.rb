@@ -1,6 +1,18 @@
 # frozen_string_literal: true
 
-# Script to call each of the Data Exporters
+# Script to call each of the User Exporters
+# Args:     locale_hash - colon separated list of locales that are changing
+#                         if changing from ar to ar-IQ, pass in ar:ar-IQ
+#
+# Example:  $ rails r ./tmp/users/export_users.rb
+#               ** this exports users without changing any locales ***
+#
+# Example:  $ rails r ./tmp/users/export_users.rb ar:ar-IQ
+#               ** this exports users, if any of those users has a locale of ar, it changes it to ar-IQ ***
+#
+# Example:  $ rails r ./tmp/users/export_users.rb ar:ar-IQ:ku:ku-IQ
+#               ** this exports users, changing ar to ar-IQ and ku to ku-IQ ***
+
 require_relative('exporters/users_exporter.rb')
 require_relative('exporters/saved_searches_exporter.rb')
 
