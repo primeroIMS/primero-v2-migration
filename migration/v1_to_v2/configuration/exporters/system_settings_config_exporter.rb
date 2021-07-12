@@ -36,6 +36,16 @@ class SystemSettingsConfigExporter < ConfigurationExporter
     reporting_location_hash
   end
 
+  def approvals_labels(locale)
+    {
+      assessment: I18n.t("approvals.bia", locale: locale),
+      case_plan: I18n.t("approvals.case_plan", locale: locale),
+      closure: I18n.t("approvals.closure", locale: locale),
+      action_plan: 'Action Plan',
+      gbv_closure: 'GBV Closure'
+    }
+  end
+
   def configuration_hash_system_settings(object)
     config_hash = object.attributes.except('id', 'default_locale', 'locales', 'primero_version',
                                            'show_provider_note_field', 'set_service_implemented_on',

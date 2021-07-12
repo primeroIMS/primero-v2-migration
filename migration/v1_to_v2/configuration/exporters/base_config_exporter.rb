@@ -6,16 +6,6 @@ require_relative('configuration_exporter.rb')
 class BaseConfigExporter < ConfigurationExporter
   private
 
-  def approvals_labels(locale)
-    {
-      assessment: I18n.t("approvals.bia", locale: locale),
-      case_plan: I18n.t("approvals.case_plan", locale: locale),
-      closure: I18n.t("approvals.closure", locale: locale),
-      action_plan: 'Action Plan',
-      gbv_closure: 'GBV Closure'
-    }
-  end
-
   def generate_report_id(name)
     code = UUIDTools::UUID.random_create.to_s.last(7)
     "#{name.parameterize}-#{code}"
