@@ -151,7 +151,6 @@ class UsersExporter
       next if user.user_name == @admin_user_name
 
       user = migrate_user_locale(user) if @locale_hash.present?
-
       begin
         file.write(stringify_user(user))
         @log.info("User: #{user.user_name} written successfully")
@@ -163,7 +162,7 @@ class UsersExporter
   end
 
   def migrate_user_locale(user)
-    return if @locale_hash.blank || user.locale.blank?
+    return if @locale_hash.blank? || user.locale.blank?
 
     user.locale = @locale_hash[user.locale] || user.locale
     user
