@@ -17,7 +17,7 @@ class SystemSettingsConfigExporter < ConfigurationExporter
     "    puts 'Updating System Settings'",
     "    system_setting.update_attributes setting_hash",
     "  end",
-    "end\n"
+    "end\n\n"
   ].join("\n").freeze
 
   def config_to_ruby_string(config_name, config_hash)
