@@ -30,13 +30,6 @@ class BaseConfigExporter < ConfigurationExporter
     field_map
   end
 
-  def convert_reporting_location_config(reporting_location_config)
-    reporting_location_hash = reporting_location_config.attributes.except('admin_level_map', 'reg_ex_filter', 'label_key')
-    reporting_location_hash['admin_level_map'] = reporting_location_config.admin_level_map.map { |k, v| [v, [k]] }.to_h
-    reporting_location_hash['admin_level_map'][reporting_location_config.admin_level] = [reporting_location_config.label_key]
-    reporting_location_hash
-  end
-
   def form_section_ruby_string(form_ids)
     "FormSection.where(unique_id: %w#{form_ids})".delete('\"').delete(',')
   end
@@ -100,15 +93,6 @@ class BaseConfigExporter < ConfigurationExporter
     config_hash
   end
 
-  def configuration_hash_system_settings(object)
-    config_hash = object.attributes.except('id', 'default_locale', 'locales', 'primero_version',
-                                           'show_provider_note_field', 'set_service_implemented_on',
-                                           'reporting_location_config').with_indifferent_access
-    config_hash['reporting_location_config'] = convert_reporting_location_config(object.reporting_location_config)
-    I18n.available_locales.each { |locale| config_hash["approvals_labels_#{locale}"] = approvals_labels(locale) }
-    config_hash
-  end
-
   def configuration_hash_contact_information(object)
     config_hash = object.attributes.except('id').with_indifferent_access
     config_hash[:name] ||= 'administrator'
@@ -122,7 +106,6 @@ class BaseConfigExporter < ConfigurationExporter
   end
 
   def config_object_names
-    %w[SystemSettings Agency Report UserGroup PrimeroModule PrimeroProgram ContactInformation
-       ExportConfiguration]
+    %w[Agency Report UserGroup PrimeroModule PrimeroProgram ContactInformation ExportConfiguration]
   end
 end

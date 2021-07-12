@@ -7,10 +7,11 @@ require_relative('exporters/lookup_config_exporter.rb')
 require_relative('exporters/role_config_exporter.rb')
 require_relative('exporters/form_config_exporter.rb')
 require_relative('exporters/location_config_exporter.rb')
+require_relative('exporters/system_settings_config_exporter.rb')
 
 def exporters
-  %w[BaseConfigExporter AgencyLogoExporter LookupConfigExporter RoleConfigExporter FormConfigExporter
-     LocationConfigExporter].freeze
+  %w[SystemSettingsConfigExporter BaseConfigExporter AgencyLogoExporter LookupConfigExporter RoleConfigExporter
+     FormConfigExporter LocationConfigExporter].freeze
 end
 
 exporters.each do |exporter|
