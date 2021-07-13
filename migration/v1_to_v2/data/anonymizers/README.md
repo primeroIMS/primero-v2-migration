@@ -24,6 +24,7 @@ Subforms
 --------
 To handle subform fields that need to anonymized, first add a hash entry for the subform itself  
 then add a hash entry for each field on that subform that needs to be anonymized.
+
 Example:
 ```
    ...
@@ -210,7 +211,7 @@ Copy the script to the v1 test server
 From the primero-v2-migration repo...  
 
 - cd migration/v1_to_v2
-- Copy the entire data directory to /home/sysadmin or /home/ubuntu on the v1 test server (depending on server setup)
+- Copy the entire data directory to /home/sysadmin or /home/ubuntu on the v1 test server (depending on server setup)  
              example:  scp -r data cpims-iq-alpha.primero.org:~/
                        
 Copy the json field map to the v1 test server
@@ -218,8 +219,8 @@ Copy the json field map to the v1 test server
 From the configuration repo...  
 
 - cd <your implementation>
-- Copy the script to the v1 test server
-             example:  cd iraq/anonymization
+- Copy the script to the v1 test server  
+             example:  cd iraq/anonymization  
                        scp anonymize_field_map.json cpims-iq-alpha.primero.org:~/
 
 On the v1 test server, run the anonymization script
@@ -238,7 +239,7 @@ Copy the script to the v1 test server
 From the primero-v2-migration repo...  
 
 - cd migration/v1_to_v2
-- Copy the entire users directory to /home/sysadmin or /home/ubuntu on the v1 test server (depending on server setup)
+- Copy the entire users directory to /home/sysadmin or /home/ubuntu on the v1 test server (depending on server setup)  
              example:  scp -r users cpims-iq-alpha.primero.org:~/
 
 On the v1 test server, run the update_disabled script
