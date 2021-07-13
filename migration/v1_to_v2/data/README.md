@@ -1,6 +1,12 @@
 These Scripts are for exporting and generating v2 compatible data migration scripts on a 1.7 system.
 ==================================================================================================
 
+
+If this is the anonymized migration run, anonymize the production data before doing the migration
+=================================================================================================
+- Refer to the [Anonymization README](./anonymizers/README.md) for more detail.
+
+
 Exporting the data on a v1 system
 ==================================
 
