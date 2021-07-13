@@ -4,7 +4,7 @@ After you have completed testing the data migration with integration and alpha d
 is to do a test migration run using anonymized production data.
 This anonymization happens on a v1 test server.
 After the v1 prod data is anonymized, continue with the migration process same as in the previous iterations.
-It is *EXTREMELY* important to anonymize sensitive personal data so it is not exposed outside of the
+It is **EXTREMELY** important to anonymize sensitive personal data so it is not exposed outside of the
 production environment.
 
 
