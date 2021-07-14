@@ -16,10 +16,30 @@ Run the script on the v1.7 system
 - ssh to the 1.7 system
 - $ sudo -Hu primero bash
 - $ cd ~/application/
-- $ $ RAILS_ENV=production bundle exec rails r /home/ubuntu/users/export_users.rb
+- $ RAILS_ENV=production bundle exec rails r /home/ubuntu/users/export_users.rb
 
 (This will generate user seed files in a seed-files directory)
 
+OPTIONAL: If a locale is changing...
+------------------------------------
+If you are changing a locale from v1 to v2, for example, changing locale ar to ar-IQ, then you can pass optional  
+flags to the export_users script to reflect the locale change on the users' locale in the exported data
+
+The format is:  $ RAILS_ENV=production bundle exec rails r /home/ubuntu/users/export_users.rb <old locale>:<new locale>
+
+Example:
+```
+  $ rails r ./tmp/users/export_users.rb ar:ar-IQ
+```
+
+  This exports users, if any of those users has a locale of ar, it changes it to ar-IQ
+
+Example 2:
+```
+  $ rails r ./tmp/users/export_users.rb ar:ar-IQ:ku:ku-IQ
+```
+
+  This exports users, changing ar to ar-IQ and ku to ku-IQ
 
 Tar up the seed-files
 ---------------------
