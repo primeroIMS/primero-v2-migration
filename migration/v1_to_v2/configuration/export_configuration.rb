@@ -14,7 +14,9 @@ def exporters
      FormConfigExporter LocationConfigExporter].freeze
 end
 
+timestamp = DateTime.now.strftime('%Y%m%d%H%M%S')
+export_dir = "seed-files-#{timestamp}"
 exporters.each do |exporter|
-  config_exporter = Object.const_get(exporter).new(batch_size: 250)
+  config_exporter = Object.const_get(exporter).new(export_dir: export_dir, batch_size: 250)
   config_exporter.export
 end
