@@ -4,13 +4,13 @@ pipelines:
   branches:
     master:
       - step:
-        name: Push to Github
-        script:
-          - git push https://$primeroimstoken@github.com/primeroIMS/primero-v2-migration.git $BITBUCKET_BRANCH
+          name: Push to Github
+          script:
+            - git push https://$primeroimstoken@github.com/primeroIMS/primero-v2-migration.git $BITBUCKET_BRANCH
   tags:
     '*':
       - step:
-        name: Push to Github
-        script:
-          - git push https://$primeroimstoken@github.com/primeroIMS/primero-v2-migration.git $BITBUCKET_TAG
+          name: Push to Github
+          script:
+            - git push https://$primeroimstoken@github.com/primeroIMS/primero-v2-migration.git $BITBUCKET_TAG
 
