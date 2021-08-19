@@ -2,15 +2,19 @@ clone:
   depth: full
 definitions:
   steps:
-    - step: &push-to-github
+    - step: &push-to-github-master
         name: Push to Github
         script:
-          - git push https://$primeroimstoken@github.com/primeroIMS/primero-v2-migration.git master --tags
+          - git push https://$primeroimstoken@github.com/primeroIMS/primero-v2-migration.git master
+    - step: &push-to-github-tag
+        name: Push to Github
+        script:
+          - git push https://$primeroimstoken@github.com/primeroIMS/primero-v2-migration.git $BITBUCKET_TAG
 pipelines:
   branches:
     master:
-      - step: *push-to-github
+      - step: *push-to-github-master
   tags:
     '*':
-      - step: *push-to-github
+      - step: *push-to-github-tag
 
