@@ -80,6 +80,7 @@ class LocationConfigExporter
     ruby_string += "location_code:\"#{location['location_code'].gsub(/[^0-9A-Za-z]/, '')}\", "
     ruby_string += "admin_level: #{location['admin_level'] || 'nil'}, "
     ruby_string += "type: \"#{location['type']}\", "
+    ruby_string += "disabled: #{location['disabled']}\, " if location['disabled'].present?
     ruby_string += "hierarchy_path: '#{build_hierarchy_path(location)}'"
     ruby_string += "),\n"
 
