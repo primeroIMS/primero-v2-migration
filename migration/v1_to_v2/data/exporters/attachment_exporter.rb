@@ -124,7 +124,7 @@ class AttachmentExporter < DataExporter
 
   def mime_type(path)
     p2 = @folder_to_save + path.gsub(/ /, '\ ')
-    `file --brief --mime-type #{p2}`.strip
+    `file --brief --mime-type "#{p2}"`.strip
   end
 
   def get_attachment_type(path)
