@@ -20,8 +20,10 @@ def exporters
   %w[UsersExporter SavedSearchesExporter].freeze
 end
 
+timestamp = DateTime.now.strftime('%Y%m%d%H%M%S')
+export_dir = "seed-files-#{timestamp}"
 locale_hash = (ARGV[0].present? && ARGV[0].is_a?(String)) ? Hash[*ARGV[0].split(':').flatten(1)] : {}
 exporters.each do |exporter|
-  data_exporter = Object.const_get(exporter).new(batch_size: 250, locale_hash: locale_hash)
+  data_exporter = Object.const_get(exporter).new(export_dir: export_dir, batch_size: 250, locale_hash: locale_hash)
   data_exporter.export
 end

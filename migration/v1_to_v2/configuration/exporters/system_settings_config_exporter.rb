@@ -15,7 +15,7 @@ class SystemSettingsConfigExporter < ConfigurationExporter
     "    SystemSettings.create!(setting_hash)",
     "  else",
     "    puts 'Updating System Settings'",
-    "    system_setting.update_attributes setting_hash",
+    "    system_setting.update setting_hash",
     "  end",
     "end\n\n"
   ].join("\n").freeze

@@ -43,8 +43,7 @@ class BaseConfigExporter < ConfigurationExporter
   end
 
   def configuration_hash_agency(object)
-    # TODO: handle logo
-    object.attributes.except('id', 'base_language', 'core_resource').merge(unique_id(object)).with_indifferent_access
+    object.attributes.except('id', 'base_language', 'core_resource', '_attachments').merge(unique_id(object)).with_indifferent_access
   end
 
   def configuration_hash_report(object)

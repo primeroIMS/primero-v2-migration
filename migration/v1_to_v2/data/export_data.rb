@@ -15,8 +15,10 @@ def exporters
      RecordHistoriesExporter TransitionDataExporter TracesExporter].freeze
 end
 
+timestamp = DateTime.now.strftime('%Y%m%d%H%M%S')
+export_dir = "record-data-files-#{timestamp}"
 exporters.each do |exporter|
-  data_exporter = Object.const_get(exporter).new(batch_size: 250)
+  data_exporter = Object.const_get(exporter).new(export_dir: export_dir, batch_size: 250)
   data_exporter.export
 end
 

@@ -5,6 +5,8 @@ require_relative('data_exporter.rb')
 # Exports v1 Primero incident data that are linked to cases as v2 compatible ruby script files.
 class LinkedIncidentDataExporter < DataExporter
   private
+
+  EXCLUDED_INCIDENT_FIELDS = ['unique_id'].freeze
   def parse_object(object)
     super(object).merge(ownership_fields(object))
   end
@@ -38,6 +40,14 @@ class LinkedIncidentDataExporter < DataExporter
     incident
   end
 
+  def copy_incident_detail_fields(incident_detail, incident)
+    incident_fields = (incident_detail.as_json.compact.keys - incident.keys) - EXCLUDED_INCIDENT_FIELDS
+    incident_fields.each do |incident_field|
+      incident[incident_field] = incident_detail[incident_field]
+    end
+    incident
+  end
+
   def model_class(_record_type)
     'Incident'
   end
@@ -67,6 +77,7 @@ class LinkedIncidentDataExporter < DataExporter
         incident = Incident.make_new_incident(child.module_id, child, child.module_id, incident_detail.unique_id,
                                               default_user)
         incident = copy_case_owner_fields(child, incident)
+        incident = copy_incident_detail_fields(incident_detail, incident)
         object_data_hash(object_name, incident)
       end
     end.flatten

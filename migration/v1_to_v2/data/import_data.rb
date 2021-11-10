@@ -34,7 +34,11 @@ records_to_import.each do |record_type|
     puts "-----------------------------------------------"
     puts "Loading file #{file_path}"
     puts "-----------------------------------------------"
-    require_relative(file_path)
+    begin
+     require_relative(file_path)
+    rescue SyntaxError => e 
+       puts "could not be exported #{file_path} due to #{e}"
+    end
   end
 end
 print_record_counts
