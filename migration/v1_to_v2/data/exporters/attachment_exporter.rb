@@ -94,9 +94,14 @@ class AttachmentExporter < DataExporter
       name = value.is_a?(String) ? value : value.file_name
 
       @json_to_export[type][@record_id][form] << {
-        record_type: @record_type.to_s, record_id: @record_id, field_name: form,
-        file_name: name, date: value.try(:date), comments: value.try(:comments),
-        is_current: value.try(:is_current) || false, description: value.try(:document_description),
+        record_type: @record_type.to_s,
+        record_id: @record_id,
+        field_name: form,
+        file_name: name,
+        date: value.try(:date),
+        comments: value.try(:comments),
+        is_current: value.try(:is_current) || false,
+        description: value.try(:document_description),
         path: "/#{@record_id}/#{form}/#{name}"
       }
     end
@@ -154,31 +159,36 @@ class AttachmentExporter < DataExporter
 
   def write_script_for_attachment(form_name, files)
     files.each do |data|
-      @output.puts "puts 'Inserting \"#{get_attachment_type(data[:path])}\" to #{data[:record_id]}'"
-      @output.puts "attachement = Attachment.new(#{data.except(:path, :field_name, :date)})"
-      add_date_to_file_for_attachment(data[:date])
-      @output.puts "attachement.record_type = #{data[:record_type]}"
-      add_attachment_type_to_file_for_attachment(data[:path])
-      @output.puts "attachement.field_name = '#{get_field_name(form_name)}'"
-      @output.puts "attachement.file.attach(io: File.open(\"\#{File.dirname(__FILE__)}#{data[:path]}\"), filename: '#{data[:file_name]}')"
-      @output.puts "begin"
-      @output.puts "  attachement.save!"
-      @output.puts "rescue StandardError => e"
-      @output.puts "  puts \"Cannot attach #{data[:file_name]}. Error \#{e.message}\""
-      @output.puts "end\n\n\n"
+      render_attachment_importer(form_name, data)
     end
+  end
+  
+  def render_attachment_importer(form, data)
+    @output.puts "puts 'Inserting \"#{get_attachment_type(data[:path])}\" to #{data[:record_id]}'"
+    @output.puts "attachement = Attachment.new(#{data.except(:path, :field_name, :date)})"
+    add_date_to_file_for_attachment(data[:date])
+    @output.puts "attachement.record_type = #{data[:record_type]}"
+    add_attachment_type_to_file_for_attachment(data[:path])
+    @output.puts "attachement.field_name = '#{get_field_name(form)}'"
+    @output.puts "attachement.file.attach(io: File.open(\"\#{File.dirname(__FILE__)}#{data[:path]}\"), filename: '#{data[:file_name]}')"
+    @output.puts "begin"
+    @output.puts "  attachement.save!"
+    @output.puts "rescue StandardError => e"
+    @output.puts "  puts \"Cannot attach #{data[:file_name]}. Error \#{e.message}\""
+    @output.puts "end\n\n\n"
   end
 
   def build_file(folder_to_save, type, sufix)
     initialize_script_for_attachment(folder_to_save, type, sufix)
-    data_object_names.each do |object_name|
-      next if @json_to_export[object_name].blank?
-
-      @json_to_export[object_name].values.each do |value|
-        value.each do |form_name, files|
-          write_script_for_attachment(form_name, files)
-        end
-      end
+    files_to_write = data_object_names.
+      reject { |type| @json_to_export[type].blank? }.
+      flat_map { |type| @json_to_export[type].values }.
+      flat_map { |form, records| records.map { |record| [form, record] } }
+    
+    files_to_write.each_slice(100) do |form, data|
+      render_attachment_importer(form, data)
+      @output.puts "# force ruby to gargabe collect here as attachmented files can build up in memory!"
+      @output.puts "GC.start"
     end
   end
 end
