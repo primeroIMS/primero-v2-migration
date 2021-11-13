@@ -182,7 +182,7 @@ class AttachmentExporter < DataExporter
     initialize_script_for_attachment(folder_to_save, type, sufix)
     files_to_write = data_object_names.
       reject { |type| @json_to_export[type].blank? }.
-      flat_map { |type| @json_to_export[type].values }.
+      flat_map { |type| @json_to_export[type].values.map(&:to_a) }.
       flat_map { |form, records| records.map { |record| [form, record] } }
     
     files_to_write.each_slice(100) do |form, data|
