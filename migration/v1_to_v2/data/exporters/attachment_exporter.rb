@@ -178,18 +178,33 @@ class AttachmentExporter < DataExporter
     @output.puts "end\n\n\n"
   end
 
-  def build_file(folder_to_save, type, sufix)
-    initialize_script_for_attachment(folder_to_save, type, sufix)
-    files_to_write = data_object_names.
-      reject { |type| @json_to_export[type].blank? }.
-      flat_map { |type| @json_to_export[type].values.map(&:to_a) }.
-      flat_map { |form, records| records.map { |record| [form, record] } }
-    
-    files_to_write.each_slice(100) do |form, data|
-      render_attachment_importer(form, data)
-      @output.puts "# force ruby to gargabe collect here as attachmented files can build up in memory!"
-      @output.puts "GC.start"
-    end
-  end
+   def build_file(folder_to_save, type, sufix)
+     initialize_script_for_attachment(folder_to_save, type, sufix)
+
+     attachments = []
+     data_object_names.each do |type|
+       records = @json_to_export[type]
+
+       next if records.blank?
+
+       records.values.each do |form|
+         form.each do |form_name, files|
+           next if files.nil?
+
+           attachments.push(*files.map { |file| [form_name, file] })
+         end
+       end
+     end
+
+
+     attachments.each_slice(100) do |slice|
+       slice.each do |form, file|
+         render_attachment_importer(form, file)
+       end
+
+       @output.puts "# force ruby to gargabe collect here as attachmented files can build up in memory!"
+       @output.puts "GC.start"
+     end
+   end
 end
 # rubocop:enable Metrics/ClassLength
