@@ -18,7 +18,7 @@ class AttachmentExporter < DataExporter
     'other_documents' => 'other_documents'
   }.freeze
 
-  def initialize(options = {})
+  def initialize(options = { batch_size: 50 })
     super(options)
     @indent = 0
     @json_to_export = {}
@@ -197,7 +197,7 @@ class AttachmentExporter < DataExporter
      end
 
 
-     attachments.each_slice(100) do |slice|
+     attachments.each_slice(10) do |slice|
        slice.each do |form, file|
          render_attachment_importer(form, file)
        end
