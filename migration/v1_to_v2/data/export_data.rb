@@ -16,7 +16,7 @@ def exporters
 end
 
 exporters.each do |exporter|
-  data_exporter = Object.const_get(exporter).new(batch_size: 250)
+  data_exporter = Object.const_get(exporter).new
   data_exporter.export
 end
 
