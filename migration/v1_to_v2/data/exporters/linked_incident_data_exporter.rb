@@ -74,6 +74,8 @@ class LinkedIncidentDataExporter < DataExporter
       next if incident_case_ids.include?(child.id)
 
       child.incident_details.map do |incident_detail|
+        next unless (incident_detail.as_json.compact.keys - EXCLUDED_INCIDENT_FIELDS).present?
+
         incident = Incident.make_new_incident(child.module_id, child, child.module_id, incident_detail.unique_id,
                                               default_user)
         incident = copy_case_owner_fields(child, incident)
