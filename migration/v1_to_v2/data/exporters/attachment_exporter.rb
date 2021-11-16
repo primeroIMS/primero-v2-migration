@@ -19,7 +19,7 @@ class AttachmentExporter < DataExporter
     'other_documents' => 'other_documents'
   }.freeze
 
-  def initialize(options = {})
+  def initialize(options = { batch_size: 50 })
     super(options)
     @indent = 0
     @json_to_export = {}
@@ -95,9 +95,14 @@ class AttachmentExporter < DataExporter
       name = value.is_a?(String) ? value : value.file_name
 
       @json_to_export[type][@record_id][form] << {
-        record_type: @record_type.to_s, record_id: @record_id, field_name: form,
-        file_name: name, date: value.try(:date), comments: value.try(:comments),
-        is_current: value.try(:is_current) || false, description: value.try(:document_description),
+        record_type: @record_type.to_s,
+        record_id: @record_id,
+        field_name: form,
+        file_name: name,
+        date: value.try(:date),
+        comments: value.try(:comments),
+        is_current: value.try(:is_current) || false,
+        description: value.try(:document_description),
         path: "/#{@record_id}/#{form}/#{name}"
       }
     end
@@ -169,23 +174,37 @@ class AttachmentExporter < DataExporter
 
   RUBY
 
-  def write_script_for_attachment(form_name, files)
-    files.each do |data|
-      @output.puts ATTACHMENT_IMPORTER_TEMPLATE.result(binding)
-    end
+  def render_attachment_importer(form_name, data)
+    @output.puts ATTACHMENT_IMPORTER_TEMPLATE.result(binding)
   end
 
-  def build_file(folder_to_save, type, sufix)
-    initialize_script_for_attachment(folder_to_save, type, sufix)
-    data_object_names.each do |object_name|
-      next if @json_to_export[object_name].blank?
+   def build_file(folder_to_save, type, sufix)
+     initialize_script_for_attachment(folder_to_save, type, sufix)
 
-      @json_to_export[object_name].values.each do |value|
-        value.each do |form_name, files|
-          write_script_for_attachment(form_name, files)
-        end
-      end
-    end
-  end
+     attachments = []
+     data_object_names.each do |type|
+       records = @json_to_export[type]
+
+       next if records.blank?
+
+       records.values.each do |form|
+         form.each do |form_name, files|
+           next if files.nil?
+
+           attachments.push(*files.map { |file| [form_name, file] })
+         end
+       end
+     end
+
+
+     attachments.each_slice(10) do |slice|
+       slice.each do |form, file|
+         render_attachment_importer(form, file)
+       end
+
+       @output.puts "# force ruby to gargabe collect here as attachmented files can build up in memory!"
+       @output.puts "GC.start"
+     end
+   end
 end
 # rubocop:enable Metrics/ClassLength
