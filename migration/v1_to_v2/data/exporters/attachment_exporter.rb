@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative('data_exporter.rb')
+require 'erb'
 
 # rubocop:disable Metrics/ClassLength
 # Class that get record's attachments and generate files to be inserted
@@ -18,7 +19,7 @@ class AttachmentExporter < DataExporter
     'other_documents' => 'other_documents'
   }.freeze
 
-  def initialize(options = {})
+  def initialize(options = { batch_size: 50 })
     super(options)
     @indent = 0
     @json_to_export = {}
@@ -94,9 +95,14 @@ class AttachmentExporter < DataExporter
       name = value.is_a?(String) ? value : value.file_name
 
       @json_to_export[type][@record_id][form] << {
-        record_type: @record_type.to_s, record_id: @record_id, field_name: form,
-        file_name: name, date: value.try(:date), comments: value.try(:comments),
-        is_current: value.try(:is_current) || false, description: value.try(:document_description),
+        record_type: @record_type.to_s,
+        record_id: @record_id,
+        field_name: form,
+        file_name: name,
+        date: value.try(:date),
+        comments: value.try(:comments),
+        is_current: value.try(:is_current) || false,
+        description: value.try(:document_description),
         path: "/#{@record_id}/#{form}/#{name}"
       }
     end
@@ -152,34 +158,53 @@ class AttachmentExporter < DataExporter
     @output.puts "attachement.date = \"#{date.strftime('%Y-%m-%d')}\""
   end
 
-  def write_script_for_attachment(form_name, files)
-    files.each do |data|
-      @output.puts "puts 'Inserting \"#{get_attachment_type(data[:path])}\" to #{data[:record_id]}'"
-      @output.puts "attachement = Attachment.new(#{data.except(:path, :field_name, :date)})"
-      add_date_to_file_for_attachment(data[:date])
-      @output.puts "attachement.record_type = #{data[:record_type]}"
-      add_attachment_type_to_file_for_attachment(data[:path])
-      @output.puts "attachement.field_name = '#{get_field_name(form_name)}'"
-      @output.puts "attachement.file.attach(io: File.open(\"\#{File.dirname(__FILE__)}#{data[:path]}\"), filename: '#{data[:file_name]}')"
-      @output.puts "begin"
-      @output.puts "  attachement.save!"
-      @output.puts "rescue StandardError => e"
-      @output.puts "  puts \"Cannot attach #{data[:file_name]}. Error \#{e.message}\""
-      @output.puts "end\n\n\n"
+  ATTACHMENT_IMPORTER_TEMPLATE = ERB.new(<<~RUBY)
+    puts "Inserting <%= get_attachment_type(data[:path]) %> to <%= data[:record_id] >"
+    attachement = Attachment.new(<%= data.except(:path, :field_name, :date) %>)
+    <% if date.present? %>attachement.date = "<%= date.strftime('%Y-%m-%d') %>"<% end %>
+    attachement.record_type = <%= data[:record_type] %>
+    attachement.attachment_type = "<%= get_attachment_type(path) %>"
+    attachement.field_name = "<%= get_field_name(form_name) %>"
+    attachement.file.attach(io: File.open("\#{File.dirname(__FILE__)}<%= data[:path] %>"), filename: <%= data[:file_name].inspect %>)
+    begin
+      attachement.save!
+    rescue StandardError => e
+      puts "Cannot attach <%= data[:file_name].inspect %>. Error \#{e.message}"
     end
+
+  RUBY
+
+  def render_attachment_importer(form_name, data)
+    @output.puts ATTACHMENT_IMPORTER_TEMPLATE.result(binding)
   end
 
-  def build_file(folder_to_save, type, sufix)
-    initialize_script_for_attachment(folder_to_save, type, sufix)
-    data_object_names.each do |object_name|
-      next if @json_to_export[object_name].blank?
+   def build_file(folder_to_save, type, sufix)
+     initialize_script_for_attachment(folder_to_save, type, sufix)
 
-      @json_to_export[object_name].values.each do |value|
-        value.each do |form_name, files|
-          write_script_for_attachment(form_name, files)
-        end
-      end
-    end
-  end
+     attachments = []
+     data_object_names.each do |type|
+       records = @json_to_export[type]
+
+       next if records.blank?
+
+       records.values.each do |form|
+         form.each do |form_name, files|
+           next if files.nil?
+
+           attachments.push(*files.map { |file| [form_name, file] })
+         end
+       end
+     end
+
+
+     attachments.each_slice(10) do |slice|
+       slice.each do |form, file|
+         render_attachment_importer(form, file)
+       end
+
+       @output.puts "# force ruby to gargabe collect here as attachmented files can build up in memory!"
+       @output.puts "GC.start"
+     end
+   end
 end
 # rubocop:enable Metrics/ClassLength
