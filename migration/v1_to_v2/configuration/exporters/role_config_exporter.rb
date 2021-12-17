@@ -265,7 +265,9 @@ class RoleConfigExporter < ConfigurationExporter
   end
 
   def role_reporting_location_level(object)
-    return nil if object.reporting_location_level.blank? || system_settings.reporting_location_config.blank?
+    return nil if !object.class.method_defined?(:reporting_location_level) ||
+      object.reporting_location_level.blank? ||
+      system_settings.reporting_location_config.blank?
 
     system_settings.reporting_location_config.admin_level_map[object.reporting_location_level]
   end
