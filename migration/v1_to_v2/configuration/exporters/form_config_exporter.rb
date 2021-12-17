@@ -66,6 +66,16 @@ class FormConfigExporter < ConfigurationExporter
   def configuration_hash_form_section(object)
     config_hash = object.attributes.except('id', 'fields', 'base_language', 'collapsed_fields', 'fixed_order',
                                            'perm_visible', 'perm_enabled', 'validations')
+
+    # Migrate v1.6 form_group_name to v1.7-v2 standard
+    if config_hash.has_key?('form_group_name')
+      form_group_id = config_hash['form_group_name'].to_s.parameterize.gsub('-', '_')
+      if form_group_id.present?
+        config_hash['form_group_id'] = form_group_id
+      end
+      config_hash.delete('form_group_name')
+    end
+
     config_hash['collapsed_field_names'] = replace_renamed_field_names(object.collapsed_fields) if object.collapsed_fields.present?
     config_hash['fields_attributes'] = object.fields.map do |field|
       configuration_hash_field(field, object.unique_id)
