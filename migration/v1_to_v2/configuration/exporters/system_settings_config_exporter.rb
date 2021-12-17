@@ -30,6 +30,7 @@ class SystemSettingsConfigExporter < ConfigurationExporter
   end
 
   def convert_reporting_location_config(reporting_location_config)
+    return nil unless reporting_location_config.attributes.has_key?('admin_level_map')
     reporting_location_hash = reporting_location_config.attributes.except('admin_level_map', 'reg_ex_filter', 'label_key')
     reporting_location_hash['admin_level_map'] = reporting_location_config.admin_level_map.map { |k, v| [v, [k]] }.to_h
     reporting_location_hash['admin_level_map'][reporting_location_config.admin_level] = [reporting_location_config.label_key]
