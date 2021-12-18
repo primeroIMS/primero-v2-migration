@@ -155,15 +155,17 @@ class AttachmentExporter < DataExporter
   def write_script_for_attachment(form_name, files)
     files.each do |data|
       @output.puts "puts 'Inserting \"#{get_attachment_type(data[:path])}\" to #{data[:record_id]}'"
+      @output.puts "current_file = File.open(\"\#{File.dirname(__FILE__)}#{data[:path]}\")"
       @output.puts "attachement = Attachment.new(#{data.except(:path, :field_name, :date)})"
       add_date_to_file_for_attachment(data[:date])
       @output.puts "attachement.record_type = #{data[:record_type]}"
       add_attachment_type_to_file_for_attachment(data[:path])
       @output.puts "attachement.field_name = '#{get_field_name(form_name)}'"
-      @output.puts "attachement.file.attach(io: File.open(\"\#{File.dirname(__FILE__)}#{data[:path]}\"), filename: '#{data[:file_name]}')"
-      @output.puts "begin"
-      @output.puts "  attachement.save!"
-      @output.puts "rescue StandardError => e"
+      @output.puts "attachement.file.attach(io: current_file , filename: '#{data[:file_name]}')"
+      @output.puts 'begin'
+      @output.puts '  attachement.save!'
+      @output.puts '  current_file.close'
+      @output.puts 'rescue StandardError => e'
       @output.puts "  puts \"Cannot attach #{data[:file_name]}. Error \#{e.message}\""
       @output.puts "end\n\n\n"
     end
