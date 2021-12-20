@@ -54,7 +54,7 @@ class DataExporter
     ].join("\n")
   end
 
-  # Sikp validations
+  # Skip validations
   # Things such as permissions may have changed since these records were created
   # We still want the record to be migrated
   def ending(object_name)
@@ -63,11 +63,15 @@ class DataExporter
       "]\n",
       "puts \"Creating \#{records.count} #{object_name.pluralize}\"",
       "begin",
-      "  InsertAllService.insert_all(#{class_name}, records.map { |r| r.attributes.slice(*#{class_name}.column_names)}, nil)",
+      "  InsertAllService.insert_all(#{class_name}, records.map { |r| (r.attributes.slice(*(#{class_name}.column_names - #{excluded_attributes}))}, nil)",
       'rescue StandardError => e',
       "  puts \"Cannot create #{object_name.pluralize}. Error \#{e.message}\"",
       "end\n"
     ].join("\n").freeze
+  end
+
+  def excluded_attributes
+    []
   end
 
   def export_object_batch(object_name, objects, index)

@@ -25,36 +25,9 @@ class FlagsExporter < DataExporter
     'Flag'
   end
 
-  # rubocop:disable Style/StringLiterals
-
-  def header
-    [
-      "# Automatically generated script to migrate flags from v1.7 to v2.0+\n",
-      "flags = [\n"
-    ].join("\n").freeze
+  def excluded_attributes
+    ['id']
   end
-
-  def ending(_)
-    [
-      "]\n",
-      "flags.each do |flag|",
-      "  puts \"Creating flag...\"",
-      "  if !flag.valid? && flag.errors.size == 1 && flag.errors.messages[:date].present?",
-      "    puts \"Flag for \#{flag.record_type} with id \#{flag.record_id} does not have a valid date. Skipping validations to save it.\"",
-      "    flag.save(validate: false)",
-      "  else",
-      "    flag.save!",
-      "  end",
-      "rescue ActiveRecord::RecordNotUnique",
-      "  puts \"Skipping creation of flag for \#{flag.record_type} with id \#{flag.record_id}. It already exists.\"",
-      "rescue StandardError => e",
-      "  puts \"Cannot create flag for \#{flag.record_type} with id \#{flag.record_id} Error \#{e.message}\"",
-      "  raise e",
-      "end\n"
-    ].join("\n").freeze
-  end
-
-  # rubocop:enable Style/StringLiterals
 
   def file_for(object_name, index)
     super(model_class(object_name), index)

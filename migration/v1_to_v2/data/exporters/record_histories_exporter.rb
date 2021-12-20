@@ -23,30 +23,9 @@ class RecordHistoriesExporter < DataExporter
     'RecordHistory'
   end
 
-  # rubocop:disable Style/StringLiterals
-  def header
-    [
-      "# Automatically generated script to migrate record histories from v1.7 to v2.0+\n",
-      "histories = [\n"
-    ].join("\n").freeze
+  def excluded_attributes
+    ['id']
   end
-
-  def ending(_object_name)
-    [
-      "]\n",
-      "histories.each do |history|",
-      "  puts \"Creating record history...\"",
-      "  history.save!",
-      "rescue ActiveRecord::RecordNotUnique",
-      "  puts \"Skipping creation of history for \#{history.record_type} with id \#{history.record_id}. It already exists.\"",
-      "rescue StandardError => e",
-      "  puts \"Cannot create history for \#{history.record_type} with id \#{history.record_id} Error \#{e.message}\"",
-      "  raise e",
-      "end\n"
-    ].join("\n").freeze
-  end
-
-  # rubocop:enable Style/StringLiterals
 
   def file_for(object_name, index)
     super(model_class(object_name), index)
