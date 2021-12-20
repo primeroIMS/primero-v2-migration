@@ -150,6 +150,7 @@ class DataExporter
   end
 
   def key_to_ruby(key)
+    # TODO: This doesn't handle the case where the key has both ' and " in it
     valid_key?(key) ? key : (key.include?("'") ? "\"#{key}\"" : "'#{key}'")
   end
 
