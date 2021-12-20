@@ -161,7 +161,7 @@ class AttachmentExporter < DataExporter
       @output.puts "attachement.record_type = #{data[:record_type]}"
       add_attachment_type_to_file_for_attachment(data[:path])
       @output.puts "attachement.field_name = '#{get_field_name(form_name)}'"
-      @output.puts "attachement.file.attach(io: current_file , filename: '#{data[:file_name]}')"
+      @output.puts "attachement.file.attach(io: current_file , filename: \"#{data[:file_name]}\")"
       @output.puts 'begin'
       @output.puts '  attachement.save!'
       @output.puts '  current_file.close'
