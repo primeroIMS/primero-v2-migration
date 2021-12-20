@@ -144,13 +144,13 @@ class DataExporter
   # rubocop:enable Metrics/AbcSize
 
   def valid_key?(key)
-    return false if key.is_a?(Integer) || key.include?('-') || key.include?(' ') || !key.match?('^[a-zA-Z]')
+    return false if key.is_a?(Integer) || key.include?('-') || key.include?(' ') || !key.match?('^[a-zA-Z]') || key.include?("'")
 
     true
   end
 
   def key_to_ruby(key)
-    valid_key?(key) ? key : "'#{key}'"
+    valid_key?(key) ? key : (key.include?("'") ? "\"#{key}\"" : "'#{key}'")
   end
 
   def parse_date_and_location_fields(object, data_hash)
