@@ -8,6 +8,7 @@ class FormConfigExporter < ConfigurationExporter
     forms_with_subforms.each do |_, form_with_subforms|
       forms_hash = form_with_subforms.map { |form| configuration_hash_form_section(form) }
       puts "Exporting Form #{forms_hash.first['unique_id']}"
+      forms_hash = migrate_config_fields_translations(forms_hash)
       export_config_objects('FormSection', forms_hash)
     end
   end
@@ -29,31 +30,41 @@ class FormConfigExporter < ConfigurationExporter
         'type' => 'tick_box',
         'tick_box_label_en' => 'Yes',
         'visible' => false,
-        'display_name_en' => 'Is this a referral to an external system / user?'
+        'display_name_i18n' => {
+          'en' =>  'Is this a referral to an external system / user?'
+        }
       },
       {
         'name' => 'service_external_referral_header',
         'type' => 'separator',
         'visible' => false,
-        'display_name_en' => 'External referral details'
+        'display_name_i18n' => {
+          'en' => 'External referral details'
+        }
       },
       {
         'name' => 'service_provider',
         'type' => 'text_field',
         'visible' => false,
-        'display_name_en' => 'Service Provider'
+        'display_name_i18n' => {
+          'en' => 'Service Provider'
+        }
       },
       {
         'name' => 'service_implementing_agency_external',
         'type' => 'text_field',
         'visible' => false,
-        'display_name_en' => 'Implementing Agency'
+        'display_name_i18n' => {
+          'en' => 'Implementing Agency'
+        }
       },
       {
         'name' => 'service_location',
         'type' => 'text_field',
         'visible' => false,
-        'display_name_en' => 'Service Location'
+        'display_name_i18n' => {
+          'en' => 'Service Location'
+        }
       }
     ]
   end
