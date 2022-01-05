@@ -9,12 +9,12 @@ class LookupConfigExporter < ConfigurationExporter
   def lookup_pdf_header
     {
       'unique_id' => 'lookup-pdf-header',
-      'name_en' => 'PDF Header',
+      'name_i18n' => { 'en' => 'PDF Header' },
       'locked' => true,
-      'lookup_values_en' => [
-        { 'id' => 'pdf_header_1', 'display_text' => 'PDF Header 1' },
-        { 'id' => 'pdf_header_2', 'display_text' => 'PDF Header 2' },
-        { 'id' => 'pdf_header_3', 'display_text' => 'PDF Header 3' }
+      'lookup_values_i18n' => [
+        { 'id' => 'pdf_header_1', 'display_text' => { 'en' => 'PDF Header 1' } },
+        { 'id' => 'pdf_header_2', 'display_text' => { 'en' => 'PDF Header 2' } },
+        { 'id' => 'pdf_header_3', 'display_text' => { 'en' => 'PDF Header 3' } }
       ]
     }
   end
@@ -29,7 +29,7 @@ class LookupConfigExporter < ConfigurationExporter
 
   def config_objects(_config_name)
     config_objects = Lookup.all.map { |object| configuration_hash_lookup(object) }
-    config_objects + default_lookups
+    migrate_config_fields_translations(config_objects) + default_lookups
   end
 
   def config_object_names
