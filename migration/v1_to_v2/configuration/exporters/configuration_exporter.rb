@@ -108,6 +108,70 @@ class ConfigurationExporter
     ruby_string + "\n#{i})\n\n"
   end
 
+  def migrate_config_fields_translations(object, parent_lang='')
+    translation_fields = [
+      'description_',
+      'display_name_',
+      'guiding_questions_',
+      'help_text_',
+      'name_',
+      'tick_box_label_',
+      'upload_document_help_text_',
+      'tally_',
+    ]
+    translation_array_fields = [
+      'option_strings_text_',
+      'lookup_values_'
+    ]
+
+
+    config_object = Marshal.load(Marshal.dump(object))
+    if object.kind_of?(Array) && parent_lang.empty?
+      return config_object.map { |item|
+        migrate_config_fields_translations(item)
+      }
+    end
+
+    config_object.keys.each do |key|
+      m = key.match(/^(#{(translation_fields).join('|')})([a-z]{2}|[a-z]{2}[_-]{1}[A-Z]{2})/)
+      ma = key.match(/^(#{(translation_array_fields).join('|')})([a-z]{2}|[a-z]{2}[_-]{1}[A-Z]{2})/)
+
+      if m
+        value = config_object.delete(key)
+        next unless value.present?
+
+        new_key = m[1].to_s.concat('i18n')
+        config_object[new_key] = {} unless config_object.key?(new_key)
+        lang = m[2].gsub('_', '-')
+        config_object[new_key][lang] = value
+      elsif key == 'display_text'
+        value = config_object.delete(key)
+        config_object[key] = { parent_lang => value }
+      elsif config_object[key].kind_of?(Array) && config_object[key].any? && config_object[key].first.kind_of?(Hash)
+        config_object_values = config_object.delete(key)
+        if ma
+          lang = ma[2].gsub('_', '-')
+          values = config_object_values.map { |obj| migrate_config_fields_translations(obj, lang) }
+          next unless values.present?
+
+          new_key = ma[1].to_s.concat('i18n')
+          if config_object.key?(new_key)
+            hsh = Hash[values.map {|h| [h[:id], h[:display_text]]}]
+            config_object[new_key] = config_object[new_key].map { |h| h[:display_text] = h[:display_text].merge(hsh[h[:id]]); h }
+          else
+            config_object[new_key] = values
+          end
+        else
+          values = config_object_values.map { |obj| migrate_config_fields_translations(obj) }
+          next unless values.present?
+          config_object[key] = values
+        end
+      end
+    end
+
+    config_object
+  end
+
   def array_value_to_ruby_string(value)
     return '[]' if value.blank?
 
