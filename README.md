@@ -40,4 +40,4 @@ Post Migration
 
 Notes
 =====
-- If you have either a tally field or a date range field in any of the ugrade server forms these fields have not yet been implemented in v2. They represent as text fields in v2 and will prevent the case from being saved (Invalid JSON Error) if the user tries to fill them out.
+- If you have a date range field in any of the ugrade server forms these fields have not yet been implemented in v2. They represent as text fields in v2 and will prevent the case from being saved (Invalid JSON Error) if the user tries to fill them out.
