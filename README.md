@@ -37,3 +37,7 @@ Post Migration
 - Run the updated_disabled.rb script to disable all users.
 - After verification is complete and ready to go live, run the update_disabled.rb script to enable all users.
 - Refer to the [User Migration README](./migration/v1_to_v2/users/README.md) for more detail.
+
+Notes
+=====
+- If you have a date range field in any of the ugrade server forms these fields have been deprecated in v2. They represent as text fields in v2 and will prevent the case from being saved (Invalid JSON Error) if the user tries to fill them out.
