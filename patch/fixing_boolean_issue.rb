@@ -45,9 +45,7 @@ field_structure.each_key do |record_type|
 
       puts "Updating #{record_type} #{record.short_id} - #{fields_updated.join(', ')}"
 
-      record_type_class.where(id: record.id).update_all(
-        "data = '#{record.data.to_json}'"
-      )
+      record.update_column("data", record.data)
     end
   end
 end
