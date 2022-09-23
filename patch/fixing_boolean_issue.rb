@@ -1,7 +1,10 @@
 # frozen_string_literal: true
 
 save_records = ARGV[0] || false
-fields_to_evaluate = Field.eager_load(form_section: :subform_field).where(visible: true, type: Field::RADIO_BUTTON, option_strings_source: 'lookup lookup-yes-no')
+fields_to_evaluate = Field.eager_load(form_section: :subform_field)
+                          .where(visible: true,
+                                 type: [Field::RADIO_BUTTON, Field::SELECT_BOX],
+                                 option_strings_source: 'lookup lookup-yes-no')
 
 # build structure of field
 field_structure = fields_to_evaluate.each_with_object({}) do |ele, acc|
@@ -29,9 +32,9 @@ field_structure.each_key do |record_type|
         next if record.data[key].nil? || !record.data[key].is_a?(Array)
 
         record.data[key].each_with_index do |_record_data_subform, idx|
-
           values.each do |subform_field|
-            if record.data[key][idx][subform_field].nil? || ![true, false].include?(record.data[key][idx][subform_field])
+            if record.data[key][idx][subform_field].nil? || ![true,
+                                                              false].include?(record.data[key][idx][subform_field])
               next
             end
 
@@ -45,7 +48,7 @@ field_structure.each_key do |record_type|
 
       puts "Updating #{record_type} #{record.short_id} - #{fields_updated.join(', ')}"
 
-      record.update_column("data", record.data)
+      record.update_column('data', record.data)
     end
   end
 end
