@@ -170,6 +170,7 @@ class UsersExporter
 
   def stringify_user(user)
     email = user.email.present? ? user.email : "#{user.user_name}@primero.org"
+    services = user.attributes.has_key?('services') ? user.services : []
     [
       "  {",
       "    user_name: \"#{user.user_name}\",",
@@ -180,7 +181,7 @@ class UsersExporter
       "    role_id: @roles[\"#{user.roles.first.id}\"]&.id,",
       "    time_zone: \"#{user.time_zone || 'UTC'}\",",
       "    send_mail: #{user.send_mail},",
-      "    services: #{user.services},",
+      "    services: #{services},",
       stringify_nullable_fields(user),
       "  },\n"
     ].join("\n")
